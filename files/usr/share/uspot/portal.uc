@@ -177,7 +177,7 @@ return {
 		return uam_url;
 	},
 
-	handle_request: function(env, uam) {
+	handle_request: function(env) {
 		let mac;
 		let form_data = {};
 		let query_string = {};

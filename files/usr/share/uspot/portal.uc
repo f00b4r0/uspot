@@ -222,6 +222,7 @@ return {
 			include('error.uc', ctx);
 			return null;
 		}
+		ctx.connected = !!length(cdata);	// cdata is empty for disconnected clients
 
 		if (!uam && length(cdata)) {	// cdata is empty for disconnected clients
 			include('connected.uc', ctx);

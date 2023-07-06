@@ -120,6 +120,11 @@ global.handle_request = function(env) {
 	let ctx = portal.handle_request(env);
 
 	if (ctx)
+		if (ctx.connected) {
+			include('connected.uc', ctx);
+			return;
+		}
+
 		switch (ctx.form_data.action) {
 		case 'credentials':
 			request_credentials(ctx);

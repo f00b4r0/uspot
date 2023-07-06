@@ -224,10 +224,6 @@ return {
 		}
 		ctx.connected = !!length(cdata);	// cdata is empty for disconnected clients
 
-		if (!uam && length(cdata)) {	// cdata is empty for disconnected clients
-			include('connected.uc', ctx);
-			return;
-		}
 		if (!cdata.ssid) {
 			let device = spotfilter_device(ctx.spotfilter, ctx.mac);
 			let hapd = ctx.ubus.call('hostapd.' + device, 'get_status');

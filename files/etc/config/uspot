@@ -1,5 +1,3 @@
-config webroot def_captive
-
 #config credentials
 #	option uspot 'example'
 #	option username 'myuser'

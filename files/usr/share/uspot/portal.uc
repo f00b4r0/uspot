@@ -82,7 +82,7 @@ return {
 	},
 
 	debug: function(ctx, msg) {
-		if (+config.def_captive?.debug)
+		if (+ctx.config.debug)
 			this.syslog(ctx, msg);
 	},
 

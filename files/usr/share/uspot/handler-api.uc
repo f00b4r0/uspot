@@ -18,7 +18,7 @@ global.handle_request = function(env) {
 			'user-portal-url': "https://" + env.SERVER_ADDR +"/hotspot",
 		};
 
-		include('api.uc', { api } );
+		include('templates/api.uc', { api } );
 	}
 };
 

@@ -29,7 +29,7 @@ function auth_client(ctx) {
 				uam.password(uam.md5(ctx.config.challenge, ctx.format_mac), ctx.query_string.password, ctx.config.uam_secret);
 		}
 	} else {
-		include('error.uc', ctx);
+		include('templates/error.uc', ctx);
 		return;
 	}
 
@@ -43,9 +43,9 @@ function auth_client(ctx) {
 	}
 
 	if (ctx.config.final_redirect_url == 'uam')
-		include('redir.uc', { redir_location: portal.uam_url(ctx, 'reject') });
+		include('templates/redir.uc', { redir_location: portal.uam_url(ctx, 'reject') });
 	else
-		include('error.uc', ctx);
+		include('templates/error.uc', ctx);
 }
 
 // disconnect client
@@ -65,7 +65,7 @@ global.handle_request = function(env) {
 		deauth_client(ctx);
 		break;
 	default:
-		include('error.uc', ctx);
+		include('templates/error.uc', ctx);
 		break;
 	}
 };

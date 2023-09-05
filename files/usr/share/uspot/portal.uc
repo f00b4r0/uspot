@@ -97,9 +97,9 @@ return {
 	// give a client access to the internet
 	allow_client: function(ctx) {
 		if (ctx.query_string.userurl)
-			include('redir.uc', { redir_location: ctx.query_string.userurl });
+			include('templates/redir.uc', { redir_location: ctx.query_string.userurl });
 		else
-			include('allow.uc', ctx);
+			include('templates/allow.uc', ctx);
 
 		// start accounting
 		ctx.ubus.call('uspot', 'client_enable', {
@@ -112,9 +112,9 @@ return {
 	logoff: function(ctx, uam) {
 		this.syslog(ctx, 'logging client off');
 		if (uam)
-			include('redir.uc', { redir_location: this.uam_url(ctx, 'logoff') });
+			include('templates/redir.uc', { redir_location: this.uam_url(ctx, 'logoff') });
 		else
-			include('logoff.uc', ctx);
+			include('templates/logoff.uc', ctx);
 
 		ctx.ubus.call('uspot', 'client_remove', {
 			uspot: ctx.spotfilter,
@@ -182,7 +182,7 @@ return {
 		// if the MAC lookup failed, go to the error page
 		if (!ctx.mac) {
 			this.syslog(ctx, 'failed to look up mac');
-			include('error.uc', ctx);
+			include('templates/error.uc', ctx);
 			return null;
 		}
 		ctx.spotfilter = lookup_station(ctx.mac) || devices[dev];	// fallback to rtnl device
@@ -200,7 +200,7 @@ return {
 		// stop if backend doesn't reply
 		if (!cdata) {
 			this.syslog(ctx, 'uspot error');
-			include('error.uc', ctx);
+			include('templates/error.uc', ctx);
 			return null;
 		}
 		ctx.connected = !!length(cdata);	// cdata is empty for disconnected clients

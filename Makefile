@@ -15,7 +15,7 @@ define Package/uspot
   TITLE:=uspot hotspot daemon
   DEPENDS:=+spotfilter +uhttpd-mod-ucode +libradcli +conntrack \
 	   +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +ucode-mod-uloop +ratelimit \
-	   +libubus +libubox +libuci
+	   +libubus +libubox +libuci +libblobmsg-json
 endef
 
 define Package/uspot/install

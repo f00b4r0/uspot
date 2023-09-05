@@ -115,7 +115,8 @@ case 'log':
 	break;
 case 'debugon':
 case 'debugoff':
-	uci.set('uspot', 'def_captive', 'debug', 'debugon'==ARGV[0]);
+	for (let interface in interfaces())
+		uci.set('uspot', interface, 'debug', 'debugon'==ARGV[0]);
 	uci.commit();
 	restart();
 	break;

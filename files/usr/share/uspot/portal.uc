@@ -76,14 +76,6 @@ function PO(id, english) {
 }
 
 return {
-	fs,
-	rtnl: require('rtnl'),
-	uam: require('uam'),
-	uci,
-	config,
-	header,
-	footer,
-
 	// syslog helper
 	syslog: function(ctx, msg) {
 		warn('uspot: ' + ctx.env.REMOTE_ADDR + ' - ' + msg + '\n');
@@ -144,11 +136,12 @@ return {
 
 
 	uam_url: function(ctx, res) {
+		let uam = require('uam');
 		let uam_url = ctx.config.uam_server +
 			'?res=' + res +
 			'&uamip=' + ctx.env.SERVER_ADDR +
 			'&uamport=' + ctx.config.uam_port +
-			'&challenge=' + this.uam.md5(ctx.config.challenge, ctx.format_mac) +
+			'&challenge=' + uam.md5(ctx.config.challenge, ctx.format_mac) +
 			'&mac=' + ctx.format_mac +
 			'&ip=' + ctx.env.REMOTE_ADDR +
 			'&called=' + ctx.config.nasmac +
@@ -158,20 +151,21 @@ return {
 		if (ctx.query_string?.redir)
 			uam_url += '&userurl=' + ctx.query_string.redir;
 		if (ctx.config.uam_secret)
-			uam_url += '&md=' + this.uam.md5(uam_url, ctx.config.uam_secret);
+			uam_url += '&md=' + uam.md5(uam_url, ctx.config.uam_secret);
 		return uam_url;
 	},
 
 	handle_request: function(env) {
+		let rtnl = require('rtnl');
 		let mac;
 		let form_data = {};
 		let query_string = {};
 		let post_data = '';
-		let ctx = { env, header: this.header, footer: this.footer, mac, form_data, post_data, query_string, config: this.config, PO };
+		let ctx = { env, header, footer, mac, form_data, post_data, query_string, PO };
 		let dev;
 
 		// lookup the peers MAC
-		let macs = this.rtnl.request(this.rtnl.const.RTM_GETNEIGH, this.rtnl.const.NLM_F_DUMP, { });
+		let macs = rtnl.request(rtnl.const.RTM_GETNEIGH, rtnl.const.NLM_F_DUMP, { });
 		for (let m in macs) {
 			if (m.dst == env.REMOTE_HOST && m.lladdr) {
 				ctx.mac = m.lladdr;

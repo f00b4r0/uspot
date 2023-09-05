@@ -11,11 +11,11 @@ let config = uci.get_all('uspot');
 let nl = require("nl80211");
 let lib = require('uspotlib');
 
-let file = fs.open('/usr/share/uspot/header', 'r');
+let file = fs.open('/www-uspot/header.html', 'r');
 let header = file.read('all');
 file.close();
 
-file = fs.open('/usr/share/uspot/footer', 'r');
+file = fs.open('/www-uspot/footer.html', 'r');
 let footer = file.read('all');
 file.close();
 

@@ -186,7 +186,7 @@ return {
 			return null;
 		}
 		ctx.spotfilter = lookup_station(ctx.mac) || devices[dev];	// fallback to rtnl device
-		ctx.config = config[ctx.spotfilter] || {};
+		ctx.config = config[ctx?.spotfilter] || {};
 		ctx.format_mac = lib.format_mac(ctx.config.mac_format, ctx.mac);
 
 		// check if a client is already connected

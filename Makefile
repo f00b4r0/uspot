@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/uspot
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=hotspot daemon
+  TITLE:=uspot hotspot daemon
   DEPENDS:=+spotfilter +uhttpd-mod-ucode +libradcli +conntrack \
 	   +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +ucode-mod-uloop +ratelimit \
 	   +libubus +libubox +libuci
@@ -23,7 +23,21 @@ define Package/uspot/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/radius-client $(1)/usr/bin/radius-client
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uspot-das $(1)/usr/bin/uspot-das
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libuam.so $(1)/usr/lib/ucode/uam.so
-	$(CP) ./files/* $(1)
+	$(CP) ./files/etc $(1)/
+	$(CP) ./files/usr $(1)/
 endef
 
+define Package/uspot-www
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=uspot default user interface files
+  DEPENDS:=+uspot
+endef
+
+define Package/uspot-www/install
+	$(CP) ./files/www-uspot $(1)/
+endef
+
+
 $(eval $(call BuildPackage,uspot))
+$(eval $(call BuildPackage,uspot-www))

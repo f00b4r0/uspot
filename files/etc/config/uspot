@@ -9,7 +9,6 @@ config webroot def_captive
 
 #config uspot 'example'
 #	option auth_mode ''		# one of 'uam', 'radius', 'credentials', 'click-to-continue'
-#	option web_root '0'		# ?
 #	option idle_timeout '600'	# client is kicked when idle for more than N seconds, defaults to 600, option used if not provided by radius
 #	option session_timeout '0'	# client is kicked if connected for more than N seconds, defaults to 0, option used if not provided by radius
 #	list ifname ''			# network devices on which captive clients will be accepted

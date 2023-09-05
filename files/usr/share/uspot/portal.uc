@@ -19,21 +19,6 @@ file = fs.open('/www-uspot/footer.html', 'r');
 let footer = file.read('all');
 file.close();
 
-let header_custom;
-let footer_custom;
-
-file = fs.open('/tmp/ucentral/www-uspot/header.html', 'r');
-if (file) {
-	header_custom = file.read('all');
-	file.close();
-}
-
-file = fs.open('/tmp/ucentral/www-uspot/footer.html', 'r');
-if (file) {
-	footer_custom = file.read('all');
-	file.close();
-}
-
 let devices = {};
 uci.foreach('uspot', 'uspot', (d) => {
 	function adddev(ifname, sname) {
@@ -203,10 +188,6 @@ return {
 		ctx.spotfilter = lookup_station(ctx.mac) || devices[dev];	// fallback to rtnl device
 		ctx.config = config[ctx.spotfilter] || {};
 		ctx.format_mac = lib.format_mac(ctx.config.mac_format, ctx.mac);
-		if (+ctx.config.web_root) {
-			ctx.header = header_custom;
-			ctx.footer = footer_custom;
-		}
 
 		// check if a client is already connected
 		ctx.ubus = ubus.connect();

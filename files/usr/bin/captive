@@ -66,7 +66,7 @@ function generate_spotfilter(name) {
 
 	let conf = {
 		name,
-		devices: type(uspot.ifname) == "array" ? uspot.ifname : [ uspot.ifname ],
+		devices: type(uspot.ifname) == "array" ? uspot.ifname : [ uspot.ifname || device_macaddr ],	// fallback to interface if no ifname provided
 		config: {
 			default_class: 0,
 			default_dns_class: 1,

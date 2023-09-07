@@ -34,17 +34,18 @@ uci.foreach('uspot', 'uspot', (d) => {
 	}
 
 	let spotname = d[".name"];
-	if (!d.ifname) {
-		warn('uspot: missing ifname in section "' + spotname + '"\n');
-		return;
-	}
-
 	if (type(d.ifname) == "array") {
 		for (let n in d.ifname)
 			adddev(n, spotname);
 	}
-	else
-		adddev(d.ifname, spotname);
+	else {
+		let dev = d.ifname || uci.get('network', d.interface, 'device');	// fallback to interface if ifname not provided
+		if (!dev) {
+			warn('uspot: neither interface nor ifname provided in section "' + spotname + '"\n');
+			return;
+		}
+		adddev(dev, spotname);
+	}
 });
 
 function lookup_station(mac) {

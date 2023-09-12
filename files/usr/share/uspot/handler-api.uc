@@ -15,7 +15,7 @@ global.handle_request = function(env) {
 	if (ctx) {
 		let api = {
 			captive: !ctx.connected,
-			'user-portal-url': "https://" + env.SERVER_ADDR +"/hotspot",
+			'user-portal-url': "https://" + env.HTTP_HOST + "/hotspot",
 		};
 
 		include('templates/api.uc', { api } );

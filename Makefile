@@ -10,6 +10,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/uspot
+  SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
@@ -28,6 +29,7 @@ define Package/uspot/install
 endef
 
 define Package/uspot-www
+  SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot default user interface files

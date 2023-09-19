@@ -232,6 +232,7 @@ radius(rc_handle *rh)
 {
 	VALUE_PAIR *send = NULL, *received;
 	char tempstr[RC_NAME_LENGTH];
+	char *rtimeout;
 	uint32_t val;
 	void *pval;
 	int len, i;
@@ -244,7 +245,13 @@ radius(rc_handle *rh)
 		if (rc_add_config(rh, "acctserver", blobmsg_get_string(tb[RADIUS_ACCT_SERVER]), "code", __LINE__))
 			goto fail;
 	}
-	if (rc_add_config(rh, "radius_timeout", "5", "code", __LINE__))
+
+	if (tb[RADIUS_ACCT] && blobmsg_get_bool(tb[RADIUS_ACCT]))
+		rtimeout = "2";		// short timeout for accounting requests
+	else
+		rtimeout = "5";
+
+	if (rc_add_config(rh, "radius_timeout", rtimeout, "code", __LINE__))
 		goto fail;
 	if (rc_add_config(rh, "radius_retries", "1", "code", __LINE__))
 		goto fail;

@@ -1,0 +1,237 @@
+#!/usr/bin/ucode
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: 2023 Thibaut Varène <hacks@slashdirt.org>
+
+// TODO: ip4/6addr (from ip neigh? or maybe rtnl query?)
+
+'use strict';
+
+let fs = require('fs');
+let uloop = require('uloop');
+let ubus = require('ubus');
+let uconn = ubus.connect();
+let uci = require('uci').cursor();
+let uspots = {};
+
+let uciload = uci.foreach('uspot', 'uspot', (d) => {
+	if (!d[".anonymous"]) {
+		uspots[d[".name"]] = {
+		settings: {
+			setname: d.setname,
+			device: uci.get('network', d.interface, 'device'),
+			debug: d.debug,
+		},
+		clients: {},
+		};
+	}
+});
+
+if (!uciload) {
+	let log = 'uspotfilter: failed to load config';
+	system('logger ' + log);
+	warn(log + '\n');
+	exit(1);
+}
+
+function syslog(uspot, mac, msg) {
+	let log = sprintf('uspotfilter: %s %s %s', uspot, mac, msg);
+
+	system('logger \'' + log + '\'');
+	warn(log + '\n');
+}
+
+function debug(uspot, mac, msg) {
+	if (+uspots[uspot].settings.debug)
+		syslog(uspot, mac, msg);
+}
+
+// wrapper for scraping external tools JSON stdout
+function json_cmd(cmd) {
+	let stdout = fs.popen(cmd);
+	if (!stdout)
+		return null;
+
+	let reply = null;
+	try {
+		reply = json(stdout.read('all'));
+	} catch(e) {
+	}
+	stdout.close();
+	return reply;
+}
+
+function client_state(uspot, mac, state)
+{
+	let settings = uspots[uspot].settings;
+	let op = state ? 'add' : 'delete';
+	let cmd = `nft -j ${op} element inet fw4 ${settings.setname} { ${mac} }`;
+
+	return json_cmd(cmd);
+}
+
+function client_allowed(uspot, mac)
+{
+	let settings = uspots[uspot].settings;
+	let cmd = `nft -j list set inet fw4 ${settings.setname}`;
+	let nft = json_cmd(cmd);
+	let elem = nft?.nftables?.[1]?.set?.elem;
+
+	return (lc(mac) in elem) ? 1 : 0;
+}
+
+function start()
+{
+	for (let name, uspot in uspots) {
+		let setname = uspot.settings.setname;
+		let cmd = `nft -j flush set inet fw4 ${setname}`;
+
+		return json_cmd(cmd);
+	}
+}
+
+function stop()
+{
+	start();
+}
+
+/*
+ "client_set":{"interface":"String","address":"String","id":"String","state":"Integer","dns_state":"Integer","accounting":"Array","data":"Table","flush":"Boolean"}
+ "client_remove":{"interface":"String","address":"String"}
+ "client_get":{"interface":"String","address":"String"}
+ "client_list":{"interface":"String"}
+ */
+
+function run_service() {
+	uconn.publish("spotfilter", {
+	client_get: {
+		call: function(req) {
+			let uspot = req.args.interface;
+			let address = req.args.address;
+
+			if (!uspot || !address)
+				return ubus.STATUS_INVALID_ARGUMENT;
+			if (!(uspot in uspots))
+				return ubus.STATUS_INVALID_ARGUMENT;
+
+			address = uc(address);
+
+			let state = client_allowed(uspot, address);
+			let device = uspots[uspot].settings.device;
+
+			return { state, device, };
+		},
+		args: {
+			interface:"",
+			address:"",
+		}
+	},
+	client_set: {
+		call: function(req) {
+			let uspot = req.args.interface;
+			let address = req.args.address;
+			let state = req.args.state || 0;
+			let data = req.args.data;
+			let flush = !!req.args.flush;
+
+			if (!uspot || !address)
+				return ubus.STATUS_INVALID_ARGUMENT;
+			if (!(uspot in uspots))
+				return ubus.STATUS_INVALID_ARGUMENT;
+
+			address = uc(address);
+
+			if (flush) {
+				if (!uspots[uspot].clients[address])
+					return 0;
+				client_state(uspot, address, 0);
+				delete uspots[uspot].clients[address];
+				return 0;
+			}
+
+			let device = uspots[uspot].settings.device;
+
+			let client = {
+				... uspots[uspot].clients[address] || {},
+				state,
+				data,
+				device,
+			};
+
+			uspots[uspot].clients[address] = client;
+
+			client_state(uspot, address, state);
+
+			return 0;
+		},
+		args: {
+			interface:"",
+			address:"",
+			id:"",
+			state:0,
+			dns_state:0,
+			accounting:[],
+			data:{},
+			flush:false,
+		}
+	},
+	client_remove: {
+		call: function(req) {
+			let uspot = req.args.interface;
+			let address = req.args.address;
+
+			if (!uspot || !address)
+				return ubus.STATUS_INVALID_ARGUMENT;
+			if (!(uspot in uspots))
+				return ubus.STATUS_INVALID_ARGUMENT;
+
+			address = uc(address);
+
+			if (!uspots[uspot].clients[address])
+				return 0;
+
+			client_state(uspot, address, 0);
+
+			delete uspots[uspot].clients[address];
+
+			return 0;
+		},
+		args: {
+			interface:"",
+			address:"",
+		}
+	},
+	client_list: {
+		call: function(req) {
+			let uspot = req.args.interface;
+
+			if (!uspot)
+				return ubus.STATUS_INVALID_ARGUMENT;
+			if (!(uspot in uspots))
+				return ubus.STATUS_INVALID_ARGUMENT;
+
+			let clients = uspots[uspot].clients;
+
+			return clients;
+		},
+		/*
+		 List all clients for a given uspot.
+		 @param uspot: REQUIRED: target uspot
+		 */
+		args: {
+			interface:"",
+		}
+	},
+	});
+
+	try {
+		start();
+		uloop.run();
+	} catch (e) {
+		warn(`Error: ${e}\n${e.stacktrace[0].context}`);
+	}
+}
+
+uloop.init();
+run_service();
+uloop.done();
+stop();

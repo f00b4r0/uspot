@@ -42,6 +42,22 @@ define Package/uspot-www/install
 	$(CP) ./files/www-uspot $(1)/
 endef
 
+define Package/uspotfilter
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=uspot limited implementation of spotfilter
+  PROVIDES:=spotfilter
+  CONFLICTS:=spotfilter
+endef
+
+define Package/uspotfilter/install
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/spotfilter $(1)/etc/init.d/spotfilter
+	$(INSTALL_BIN) ./files/usr/sbin/spotfilter $(1)/usr/sbin/spotfilter
+endef
+
+
 
 $(eval $(call BuildPackage,uspot))
 $(eval $(call BuildPackage,uspot-www))
+$(eval $(call BuildPackage,uspotfilter))

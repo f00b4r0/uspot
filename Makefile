@@ -20,12 +20,14 @@ define Package/uspot
 endef
 
 define Package/uspot/install
-	$(INSTALL_DIR) $(1)/usr/bin/ $(1)/usr/lib/ucode
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/ucode $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/radius-client $(1)/usr/bin/radius-client
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uspot-das $(1)/usr/bin/uspot-das
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libuam.so $(1)/usr/lib/ucode/uam.so
-	$(CP) ./files/etc $(1)/
-	$(CP) ./files/usr $(1)/
+	$(INSTALL_DATA) ./files/etc/config/uspot $(1)/etc/config/uspot
+	$(INSTALL_BIN) ./files/etc/init.d/uspot $(1)/etc/init.d/uspot
+	$(CP) ./files/usr/bin $(1)/usr/
+	$(CP) ./files/usr/share $(1)/usr/
 endef
 
 define Package/uspot-www

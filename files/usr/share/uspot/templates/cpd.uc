@@ -1,4 +1,4 @@
 Status: 302 Found
-Location: http://{{env.SERVER_ADDR}}/hotspot/?redir={{env.headers.host}}{{env.REQUEST_URI}}
+Location: http://{{cpd.addr}}/hotspot/?redir={{cpd.redir}}
 Content-Type: text/html
 

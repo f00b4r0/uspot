@@ -4,6 +4,8 @@
 
 'use strict';
 
+import { urlencode, ENCODE_FULL } from 'lucihttp';
+
 let ubus = require('ubus');
 let fs = require('fs');
 let uci = require('uci').cursor();
@@ -150,7 +152,7 @@ return {
 			'&ssid=' + ctx.ssid +
 			'&sessionid=' + ctx.sessionid;
 		if (ctx.query_string?.redir)
-			uam_url += '&userurl=' + ctx.query_string.redir;
+			uam_url += '&userurl=' + urlencode(ctx.query_string.redir, ENCODE_FULL);
 		if (ctx.config.uam_secret)
 			uam_url += '&md=' + uam.md5(uam_url, ctx.config.uam_secret);
 		return uam_url;

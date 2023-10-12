@@ -1,6 +1,6 @@
 # uspot
 
-A captive portal system
+A captive portal system for OpenWrt
 
 ## Description
 
@@ -20,37 +20,16 @@ The software consists of several parts:
 The available configuration options and their defaults are listed in the provided [files/etc/config/uspot] configuration file.
 
 To achieve a fully operational captive portal, additional components must be configured:
-- dnsmasq for serving DHCP to captive clients
 - firewall for traffic management
+- dnsmasq for serving DHCP to captive clients
 - uhttpd for the web interface
 
 The OpenWrt configuration snippets below assume that a dedicated network interface named 'captive' has been created
-and will be dedicated to the captive portal, and that a similarly named 'captive' uspot section is configured.
+and will be dedicated to the captive portal, and that a similarly named 'captive' uspot section is configured
+in `/etc/config/uspot`.
 
 The 'captive' network interface is assumed to have a static IPv4 address of '10.0.0.1'.
 The provided configuration sets up an IPv4 captive portal.
-
-### config/dhcp
-
-```
-config dhcp 'captive'
-	option interface 'captive'
-	option start '2'
-	option limit '1000'
-	option leasetime '2h'
-	# add the following for RFC8910 Captive Portal API - DNS name is setup below
-	list dhcp_option_force '114,https://captive.example.org/api'
-
-# add a local domain name for HTTPS support, name must match TLS certificate
-config domain
-	option name 'captive.example.org'
-	option ip '10.0.0.1'
-```
-
-This snippet will allow up to 1000 captive clients on interface 'captive' with a 2h lease time.
-The DNS name `captive.example.org` aliases the 'captive' interface IP for TLS support
-(public TLS certificates cannot be obtained for private IP addresses): a valid, publicy-signed TLS certificate
-will have to be created and provided for this to work. The RFC requires the API to be accessed over TLS.
 
 ### config/firewall
 
@@ -75,7 +54,7 @@ config redirect
 	option proto 'tcp'
 	option target 'DNAT'
 	option reflection '0'
-	option mark '!1/127'
+	option ipset '!uspot'	# match with uspot option 'setname'
 
 # allow incoming traffic to CPD / web interface and local UAM server
 config rule
@@ -92,14 +71,14 @@ config rule
 	option dest 'wan'
 	option proto 'any'
 	option target 'ACCEPT'
-	option mark '1/127'
+	option ipset 'uspot'	# match with uspot option 'setname'
 
 # allow DHCP for captive clients
 config rule
-	option name 'Allow-DHCP-captive'
+	option name 'Allow-DHCP-NTP-captive'
 	option src 'captive'
 	option proto 'udp'
-	option dest_port '67'
+	option dest_port '67 123'
 	option target 'ACCEPT'
 
 # allow DNS for captive clients
@@ -121,7 +100,27 @@ config rule
 	option dest_port '3799'		# match value for 'das_port' in config/uspot
 	option target 'ACCEPT'
 
-# TODO: allow NTP for TLS validation - in spotfilter?
+# create the ipset that will hold authenticated clients
+config ipset
+	option name 'uspot'	# match with uspot option 'setname'
+	list match 'src_mac'
+
+# optional whitelist for e.g. remote UAM host and/or dynamic hosts via dnsmasq ipset functionality
+config rule
+	option name 'Allow-Whitelist'
+	option src 'captive'
+	option dest 'wan'
+	option proto 'any'
+	option ipset 'wlist'
+	option target 'ACCEPT'
+
+# associated whitelist ipset with prepopulated entries
+config ipset
+	option name 'wlist'
+	list match 'dest_ip'
+	list entry 'XX.XX.XX.XX'	# adjust as needed for e.g. remote UAM server
+	list entry 'XX.XX.XX.XX'
+
 ```
 
 In the `Allow-captive-CPD-WEB-UAM` rule, port 80 is always required for CPD.
@@ -132,12 +131,42 @@ The optional rule `Allow-captive-DAE` allows incoming WAN traffic to the local R
 It is highly recommended to add restrictions on allowed source IP, since the server is very simple and does not implement
 any security defense mechanism.
 
+### config/dhcp
+
+```
+config dhcp 'captive'
+	option interface 'captive'
+	option start '2'
+	option limit '1000'
+	option leasetime '2h'
+	# add the following for RFC8910 Captive Portal API - DNS name is setup below
+	list dhcp_option_force '114,https://captive.example.org/api'
+	# optionally provide NTP server (if enabled on the device) - recommended for SSL cert validation
+	list dhcp_option_force '42,10.0.0.1'
+
+# add a local domain name for HTTPS support, name must match TLS certificate
+config domain
+	option name 'captive.example.org'
+	option ip '10.0.0.1'
+
+# if using optional dynamic hosts whitelist
+config ipset
+	list name 'wlist'	# match value with whitelist ipset name in config/firewall
+	list domain 'my.whitelist1.domain'
+	list domain 'my.whitelist2.domain'
+```
+
+This snippet will allow up to 1000 captive clients on interface 'captive' with a 2h lease time.
+The DNS name `captive.example.org` aliases the 'captive' interface IP for TLS support
+(public TLS certificates cannot be obtained for private IP addresses): a valid, CA-signed TLS certificate
+will have to be created and provided for this to work. The RFC requires the API to be accessed over TLS.
+
 ### config/uhttpd
 
 In new OpenWrt installations, uhttpd listens on all interfaces on port 80 by default, which would conflict with the
 captive portal operation. So first, the default instance must be disabled or either set to listen to a
 different port (e.g. 8080), or listen only on the LAN interface. This last option can be achieved using the
-following uci commands, assuming a LAN IP of "192.168.1.1":
+following uci commands, assuming a LAN IP of '192.168.1.1':
 
 ```
 uci delete uhttpd.main.listen_http
@@ -159,7 +188,7 @@ config uhttpd 'uspot'
 	option error_page '/cpd'
 	# if using TLS and/or supporting RFC8908 CapPort API:
 	list listen_https '10.0.0.1:443'
-	option cert '/usr/share/certs/captive.crt'	# to be provided manually
+	option cert '/usr/share/certs/captive.pem'	# to be provided manually
 	option key '/usr/share/certs/captive.key'	# to be provided manually
 	# for RFC8908 support:
 	list ucode_prefix '/api=/usr/share/uspot/handler-api.uc'
@@ -192,8 +221,8 @@ IP="$3"
 NETID="${DNSMASQ_TAGS%% *}"
 
 if [ "captive" == "$NETID" ]; then
-	ubus call uspot client_auth "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\", \"client_ip\":\"$IP\" }"
-	ubus call uspot client_enable "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\" }"	# this will fail anyway if auth was denied
+	ubus call uspot client_auth "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\", \"client_ip\":\"$IP\" }" > /dev/null
+	ubus call uspot client_enable "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\" }" 2>/dev/null	# this will fail anyway if auth was denied
 fi
 ```
 

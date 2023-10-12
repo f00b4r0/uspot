@@ -9,9 +9,9 @@
 #	option auth_mode ''		# one of 'uam', 'radius', 'credentials', 'click-to-continue'
 #	option idle_timeout '600'	# client is kicked when idle for more than N seconds, defaults to 600, option used if not provided by radius
 #	option session_timeout '0'	# client is kicked if connected for more than N seconds, defaults to 0, option used if not provided by radius
-#	option interface ''		# network interface (from config/network) on which captive clients will be accepted and unauth clients will be redirected to
+#	option interface ''		# network interface (from config/network) on which captive clients will be managed
+#	option setname ''		# firewall ipset name for client management
 #	option debug '0'		# turn on debugging output in logs
-#	option configure_spotfilter '0' # allow 'captive generate' to generate spotfilter config from uspot config
 
 # for auth mode 'uam' and 'radius':
 #	option auth_server ''		# radius authentication server name or address
@@ -39,8 +39,3 @@
 #	option mac_auth '0'		# Attempt MAC-authentication first
 #	option mac_password ''		# Password sent for MAC-auth, defaults to MAC address
 #	option mac_suffix ''		# Optional suffix appended to username for MAC-auth
-
-# if config_spotfilter=1:
-#	list wl_hosts ''		# whitelisted host names
-#	list wl_addrs ''		# whitelisted IP addresses
-#	option client_autoremove '0'	# ?

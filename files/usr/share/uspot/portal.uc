@@ -151,6 +151,8 @@ return {
 			'&nasid=' + ctx.config.nasid +
 			'&ssid=' + ctx.ssid +
 			'&sessionid=' + ctx.sessionid;
+		if (ctx.config.uam_sslurl)
+			uam_url += '&ssl=' + urlencode(ctx.config.uam_sslurl, ENCODE_FULL);
 		if (ctx.query_string?.redir)
 			uam_url += '&userurl=' + urlencode(ctx.query_string.redir, ENCODE_FULL);
 		if (ctx.config.uam_secret)

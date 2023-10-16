@@ -166,7 +166,7 @@ return {
 		let form_data = {};
 		let query_string = {};
 		let post_data = '';
-		let ctx = { env, header, footer, mac, form_data, post_data, query_string, PO };
+		let ctx = { env, header, footer, mac, form_data, query_string, PO };
 		let dev;
 
 		// lookup the peers MAC

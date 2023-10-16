@@ -15,6 +15,7 @@
 
 # captive portal API (RFC8908) configuration:
 #	option cpa_can_extend '0'	# 'can-extend-session' is true if this option is set to '1', false otherwise
+#	option cpa_venue_url ''		# value is provided verbatim as 'venue-info-url'
 
 # for auth mode 'uam' and 'radius':
 #	option auth_server ''		# radius authentication server name or address

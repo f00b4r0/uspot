@@ -18,6 +18,8 @@ global.handle_request = function(env) {
 			'user-portal-url': "https://" + env.HTTP_HOST + "/hotspot",
 			'can-extend-session': !!ctx.config.cpa_can_extend,
 		};
+		if (ctx.config.cpa_venue_url)
+			api['venue-info-url'] = ctx.config.cpa_venue_url;
 		if (ctx.seconds_remaining)
 			api['seconds-remaining'] = ctx.seconds_remaining;
 

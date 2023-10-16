@@ -13,6 +13,9 @@
 #	option setname ''		# firewall ipset name for client management
 #	option debug '0'		# turn on debugging output in logs
 
+# captive portal API (RFC8908) configuration:
+#	option cpa_can_extend '0'	# 'can-extend-session' is true if this option is set to '1', false otherwise
+
 # for auth mode 'uam' and 'radius':
 #	option auth_server ''		# radius authentication server name or address
 #	option auth_port '1812'		# radius authentication server port

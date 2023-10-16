@@ -16,6 +16,7 @@ global.handle_request = function(env) {
 		let api = {
 			captive: !ctx.connected,
 			'user-portal-url': "https://" + env.HTTP_HOST + "/hotspot",
+			'can-extend-session': !!ctx.config.cpa_can_extend,
 		};
 		if (ctx.seconds_remaining)
 			api['seconds-remaining'] = ctx.seconds_remaining;

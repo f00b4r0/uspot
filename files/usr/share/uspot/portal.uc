@@ -215,6 +215,7 @@ return {
 		}
 		ctx.ssid = cdata.ssid;
 		ctx.sessionid = cdata.sessionid;
+		ctx.seconds_remaining = cdata.seconds_remaining;
 
 		// split QUERY_STRING
 		if (env.QUERY_STRING)

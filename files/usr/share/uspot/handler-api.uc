@@ -17,6 +17,8 @@ global.handle_request = function(env) {
 			captive: !ctx.connected,
 			'user-portal-url': "https://" + env.HTTP_HOST + "/hotspot",
 		};
+		if (ctx.seconds_remaining)
+			api['seconds-remaining'] = ctx.seconds_remaining;
 
 		include('templates/api.uc', { api } );
 	}

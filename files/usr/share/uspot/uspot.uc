@@ -878,7 +878,15 @@ function run_service() {
 
 				let client = uspots[uspot].clients[address];
 
-				return client.data || {};
+				let data = {
+					... client.data || {},
+				};
+
+				let timeout = +client.session;
+				if (timeout)
+					data.seconds_remaining = timeout - (time() - client.connect);
+
+				return data;
 			},
 			/*
 			 Get a client public state.

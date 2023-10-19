@@ -883,8 +883,15 @@ function run_service() {
 				};
 
 				let timeout = +client.session;
-				if (timeout)
+				if (timeout) {
 					data.seconds_remaining = timeout - (time() - client.connect);
+					// if timeout is exceeded, immediately kick client for consistency's sake
+					if (data.seconds_remaining <= 0) {
+						radius_terminate(uspot, address, radtc_sessionto);
+						client_reset(uspot, address, 'session timeout');
+						return {};
+					}
+				}
 
 				return data;
 			},

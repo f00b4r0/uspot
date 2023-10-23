@@ -566,7 +566,7 @@ function accounting(uspot) {
 			continue;
 		}
 		let maxtotal = +client.max_total;
-		if (maxtotal && ((list[mac].acct_data.bytes_ul + list[mac].acct_data.bytes_dl) >= maxtotal)) {
+		if (maxtotal && (((list[mac].acct_data?.bytes_ul || 0) + (list[mac].acct_data?.bytes_dl || 0)) >= maxtotal)) {
 			radius_terminate(uspot, mac, radtc_sessionto);
 			client_reset(uspot, mac, 'max octets reached');
 			continue;

@@ -863,43 +863,54 @@ function run_service() {
 		},
 		client_get: {
 			call: function(req) {
+				function client_get_data(client) {
+					let data = {
+						... client.data || {},
+						duration: time() - client.connect,
+					};
+
+					let timeout = +client.session;
+					if (timeout) {
+						data.seconds_remaining = timeout - data.duration;
+						// if timeout is exceeded, immediately kick client for consistency's sake
+						if (data.seconds_remaining <= 0) {
+							radius_terminate(uspot, address, radtc_sessionto);
+							client_reset(uspot, address, 'session timeout');
+							return {};
+						}
+					}
+
+					return data;
+				}
+
 				let uspot = req.args.uspot;
 				let address = req.args.address;
 
-				if (!uspot || !address)
+				if (!uspot)
 					return ubus.STATUS_INVALID_ARGUMENT;
 				if (!(uspot in uspots))
 					return ubus.STATUS_INVALID_ARGUMENT;
 
-				address = uc(address);
+				if (address) {
+					address = uc(address);
 
-				if (!uspots[uspot].clients[address])
-					return {};
-
-				let client = uspots[uspot].clients[address];
-
-				let data = {
-					... client.data || {},
-					duration: time() - client.connect,
-				};
-
-				let timeout = +client.session;
-				if (timeout) {
-					data.seconds_remaining = timeout - data.duration;
-					// if timeout is exceeded, immediately kick client for consistency's sake
-					if (data.seconds_remaining <= 0) {
-						radius_terminate(uspot, address, radtc_sessionto);
-						client_reset(uspot, address, 'session timeout');
+					if (!uspots[uspot].clients[address])
 						return {};
-					}
-				}
 
-				return data;
+					let client = uspots[uspot].clients[address];
+					return client_get_data(client);
+				}
+				else {
+					let payload = {};
+					for (let mac, client in uspots[uspot].clients)
+						payload[mac] = client_get_data(client);
+					return payload;
+				}
 			},
 			/*
-			 Get a client public state.
+			 Get a/all client public state.
 			 @param uspot: REQUIRED: target uspot
-			 @param address: REQUIRED: client MAC address
+			 @param address: OPTIONAL: client MAC address
 			 */
 			args: {
 				uspot:"",

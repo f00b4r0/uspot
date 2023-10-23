@@ -909,21 +909,23 @@ function run_service() {
 			call: function(req) {
 				let uspot = req.args.uspot;
 
-				if (!uspot)
+				if (uspot && !(uspot in uspots))
 					return ubus.STATUS_INVALID_ARGUMENT;
-				if (!(uspot in uspots))
-					return ubus.STATUS_INVALID_ARGUMENT;
-
-				let clients = uspots[uspot].clients;
 
 				let payload = {};
-				payload[uspot] = keys(clients);
+
+				if (uspot)
+					payload[uspot] = keys(uspots[uspot].clients);
+				else {
+					for (uspot in uspots)
+						payload[uspot] = keys(uspots[uspot].clients);
+				}
 
 				return payload;
 			},
 			/*
-			 List all clients for a given uspot.
-			 @param uspot: REQUIRED: target uspot
+			 List all clients for all / a given uspot.
+			 @param uspot: OPTIONAL: target uspot
 			 */
 			args: {
 				uspot:"",

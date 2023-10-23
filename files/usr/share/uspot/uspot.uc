@@ -880,11 +880,12 @@ function run_service() {
 
 				let data = {
 					... client.data || {},
+					duration: time() - client.connect,
 				};
 
 				let timeout = +client.session;
 				if (timeout) {
-					data.seconds_remaining = timeout - (time() - client.connect);
+					data.seconds_remaining = timeout - data.duration;
 					// if timeout is exceeded, immediately kick client for consistency's sake
 					if (data.seconds_remaining <= 0) {
 						radius_terminate(uspot, address, radtc_sessionto);

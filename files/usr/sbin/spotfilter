@@ -1,8 +1,7 @@
 #!/usr/bin/ucode
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2023 Thibaut Varène <hacks@slashdirt.org>
-
-// TODO: ip4/6addr (from ip neigh? or maybe rtnl query?)
+// uspotfilter - uspot interface to netfilter
 
 'use strict';
 
@@ -11,18 +10,26 @@ let uloop = require('uloop');
 let ubus = require('ubus');
 let uconn = ubus.connect();
 let uci = require('uci').cursor();
+let rtnl = require('rtnl');
+
 let uspots = {};
+let devices = {};
 
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	if (!d[".anonymous"]) {
+		let device = uci.get('network', d.interface, 'device');
+
 		uspots[d[".name"]] = {
 		settings: {
 			setname: d.setname,
-			device: uci.get('network', d.interface, 'device'),
+			device,
 			debug: d.debug,
 		},
 		clients: {},
+		neighs: {},
 		};
+
+		devices[device] = d[".name"];
 	}
 });
 
@@ -79,6 +86,84 @@ function client_allowed(uspot, mac)
 	return (lc(mac) in elem) ? 1 : 0;
 }
 
+function client_remove(uspot, mac)
+{
+	let client = uspots[uspot].clients[mac];
+
+	if (!client)
+		return 0;
+
+	client_state(uspot, mac, 0);
+
+	// purge existing connections
+	if (client.ip4addr) {
+		system('conntrack -D -s ' + client.ip4addr);
+		// keep neighs in sync
+		delete uspots[uspot].neighs[client.ip4addr];
+	}
+
+	delete uspots[uspot].clients[mac];
+}
+
+// parse netlink NEIGH messages
+function rtnl_neigh_cb(msg)
+{
+	msg = msg.msg;
+	let mac = msg?.lladdr;
+	let dev = msg?.dev;
+	let dst = msg?.dst;
+	let family = msg?.family;
+
+	if (!dst || !dev)
+		return;
+
+	// only deal with ip4 for now
+	switch (family) {
+	case rtnl.const.AF_INET:
+		break;
+	default:
+		return;
+	}
+
+	let uspot = devices[dev];
+	if (!uspot)	// not for us
+		return;
+
+	mac = uc(mac);
+	let client = uspots[uspot].clients[mac];
+	let neigh = uspots[uspot].neighs[dst];
+
+	let state = msg.state;
+
+	// process REACHABLE / STALE / FAILED and INCOMPLETE neighbour states
+	switch (state) {
+	case rtnl.const.NUD_REACHABLE:
+		if (!neigh) {
+			uspots[uspot].neighs[dst] = { mac };
+			if (client)
+				client.ip4addr = dst;
+			else
+				uspots[uspot].clients[mac] = { ip4addr: dst };
+		}
+		if (client)
+			delete client.idle_since;
+		break;
+	case rtnl.const.NUD_STALE:
+		if (client && !client.idle_since)
+			client.idle_since = time();
+		break;
+	case rtnl.const.NUD_FAILED:
+	case rtnl.const.NUD_INCOMPLETE:
+		// lladdr is no longer available in these states
+		if (neigh) {
+			client_remove(uspot, neigh.mac);
+			delete uspots[uspot].neighs[dst];
+			// we expect to eventually receive FAILED/INCOMPLETE messages for all added neighs
+		}
+		break;
+	}
+}
+
 function start()
 {
 	for (let name, uspot in uspots) {
@@ -87,6 +172,8 @@ function start()
 
 		json_cmd(cmd);
 	}
+
+	rtnl.listener(rtnl_neigh_cb, null, [ rtnl.const.RTNLGRP_NEIGH ]);
 }
 
 function stop()
@@ -118,7 +205,7 @@ function run_service() {
 			let state = client_allowed(uspot, address);
 			let device = uspots[uspot].settings.device;
 
-			return { state, device, };
+			return { ... uspots[uspot].clients[address] || {}, state, device, };
 		},
 		args: {
 			interface:"",
@@ -183,12 +270,7 @@ function run_service() {
 
 			address = uc(address);
 
-			if (!uspots[uspot].clients[address])
-				return 0;
-
-			client_state(uspot, address, 0);
-
-			delete uspots[uspot].clients[address];
+			client_remove(uspot, address);
 
 			return 0;
 		},

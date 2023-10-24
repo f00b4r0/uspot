@@ -460,6 +460,7 @@ function client_kick(uspot, mac, remove) {
 
 	let client = uspots[uspot].clients[mac];
 
+	// purge existing connections (XXX keep this here as 'regular' spotfilter doesn't handle this yet)
 	if (client.ip4addr)
 		system('conntrack -D -s ' + client.ip4addr);
 	if (client.ip6addr)
@@ -554,7 +555,8 @@ function accounting(uspot) {
 			continue;
 		}
 
-		if (+list[mac].idle > +client.idle) {
+		if ((+list[mac].idle > +client.idle) ||
+		    (+list[mac].idle_since && (t - list[mac].idle_since > +client.idle))) {
 			radius_terminate(uspot, mac, radtc_idleto);
 			client_reset(uspot, mac, 'idle event');
 			continue;

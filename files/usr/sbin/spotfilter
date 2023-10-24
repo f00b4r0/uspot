@@ -148,13 +148,10 @@ function run_service() {
 				return 0;
 			}
 
-			let device = uspots[uspot].settings.device;
-
 			let client = {
 				... uspots[uspot].clients[address] || {},
 				state,
 				data,
-				device,
 			};
 
 			uspots[uspot].clients[address] = client;

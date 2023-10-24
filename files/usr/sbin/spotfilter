@@ -85,7 +85,7 @@ function start()
 		let setname = uspot.settings.setname;
 		let cmd = `nft -j flush set inet fw4 ${setname}`;
 
-		return json_cmd(cmd);
+		json_cmd(cmd);
 	}
 }
 

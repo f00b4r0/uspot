@@ -172,11 +172,12 @@ return {
 		let dev;
 
 		// lookup the peers MAC
-		let macs = rtnl.request(rtnl.const.RTM_GETNEIGH, rtnl.const.NLM_F_DUMP, { });
-		for (let m in macs) {
-			if (m.dst == env.REMOTE_HOST && m.lladdr) {
-				ctx.mac = m.lladdr;
-				dev = m.dev;
+		let neighs = rtnl.request(rtnl.const.RTM_GETNEIGH, rtnl.const.NLM_F_DUMP, { });
+		for (let n in neighs) {
+			if (n.dst == env.REMOTE_HOST && n.lladdr) {
+				ctx.mac = n.lladdr;
+				dev = n.dev;
+				break;
 			}
 		}
 

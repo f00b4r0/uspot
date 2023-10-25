@@ -1,3 +1,4 @@
+#for auth mode 'credentials', add any number of the following config entry
 #config credentials
 #	option uspot 'example'
 #	option username 'myuser'
@@ -39,7 +40,7 @@
 #	option uam_secret ''		# remote UAM server password
 #	option uam_server ''		# remote UAM server base url, e.g. "https://server.example.com/" - NB: trailing slash
 #	option challenge ''		# UAM CHAP shared challenge
-#	option final_redirect_url ''	# ?	NULL or 'uam'
+#	option final_redirect_url ''	# URL the client will be redirected to upon login. Special value 'uam' enables UAM 'success/reject/logoff' redirections URLs.
 #	option mac_auth '0'		# Attempt MAC-authentication first
 #	option mac_password ''		# Password sent for MAC-auth, defaults to MAC address
 #	option mac_suffix ''		# Optional suffix appended to username for MAC-auth

@@ -36,7 +36,7 @@ function auth_client(ctx) {
 
         let auth = portal.uspot_auth(ctx, username, password, challenge, payload);
 	if (auth && auth['access-accept']) {
-		let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : null;
+		let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : ctx.config.final_redirect_url;
 		portal.allow_client(ctx, redir);
 		return;
 	}

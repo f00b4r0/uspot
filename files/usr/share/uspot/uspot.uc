@@ -811,13 +811,11 @@ function run_service() {
 				if (!(uspot in uspots))
 					return ubus.STATUS_INVALID_ARGUMENT;
 
-				address = uc(address);
+				address = uc(address);	// spotfilter uses ether_ntoa() which is uppercase
 
 				// enabling clients can only be done for known ones (i.e. those which passed authentication)
 				if (!uspots[uspot].clients[address])
 					return ubus.STATUS_NOT_FOUND;
-
-				address = uc(address);	// spotfilter uses ether_ntoa() which is uppercase
 
 				client_enable(uspot, address);
 

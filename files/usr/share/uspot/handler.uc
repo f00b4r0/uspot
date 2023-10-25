@@ -13,13 +13,13 @@ function request_start(ctx) {
 	portal.debug(ctx, 'start ' + (ctx.config.auth_mode || '') + ' flow');
 	switch (ctx.config.auth_mode) {
 	case 'click-to-continue':
-		include('templates/click.uc', ctx);
+		include('templates/click.ut', ctx);
 		return;
 	case 'credentials':
-		include('templates/credentials.uc', ctx);
+		include('templates/credentials.ut', ctx);
 		return;
 	case 'radius':
-		include('templates/radius.uc', ctx);
+		include('templates/radius.ut', ctx);
 		return;
 	case 'uam':
 		// try mac-auth first if enabled
@@ -33,10 +33,10 @@ function request_start(ctx) {
 			}
 		}
 		ctx.redir_location = portal.uam_url(ctx, 'notyet');
-		include('templates/redir.uc', ctx);
+		include('templates/redir.ut', ctx);
 		return;
 	default:
-		include('templates/error.uc', ctx);
+		include('templates/error.ut', ctx);
 		return;
 	}
 }
@@ -45,7 +45,7 @@ function request_start(ctx) {
 function request_click(ctx) {
 	// make sure this is the right auth_mode
 	if (ctx.config.auth_mode != 'click-to-continue') {
-		include('templates/error.uc', ctx);
+		include('templates/error.ut', ctx);
                 return;
 	}
 
@@ -63,7 +63,7 @@ function request_click(ctx) {
 function request_credentials(ctx) {
 	// make sure this is the right auth_mode
 	if (ctx.config.auth_mode != 'credentials') {
-		include('templates/error.uc', ctx);
+		include('templates/error.ut', ctx);
                 return;
 	}
 
@@ -90,7 +90,7 @@ function request_credentials(ctx) {
 function request_radius(ctx) {
 	// make sure this is the right auth_mode
 	if (ctx.config.auth_mode != 'radius') {
-		include('templates/error.uc', ctx);
+		include('templates/error.ut', ctx);
                 return;
 	}
 
@@ -123,7 +123,7 @@ global.handle_request = function(env) {
 		return;
 
 	if (ctx.connected) {
-		include('templates/connected.uc', ctx);
+		include('templates/connected.ut', ctx);
 		return;
 	}
 

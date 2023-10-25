@@ -14,6 +14,6 @@ global.handle_request = function(env) {
 		redir,
 	};
 
-	include('templates/cpd.uc', { cpd });
+	include('templates/cpd.ut', { cpd });
 };
 %}

@@ -23,10 +23,10 @@ global.handle_request = function(env) {
 		if (ctx.seconds_remaining)
 			api['seconds-remaining'] = ctx.seconds_remaining;
 
-		include('templates/api.uc', { api } );
+		include('templates/api.ut', { api } );
 	}
 	else
-		include('templates/api.uc', { api: {} } );
+		include('templates/api.ut', { api: {} } );
 };
 
 %}

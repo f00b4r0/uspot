@@ -26,9 +26,8 @@ function request_start(ctx) {
 		if (+ctx.config.mac_auth) {
 		        let auth = portal.uspot_auth(ctx);
 			if (auth && auth['access-accept']) {
-				if (ctx.config.final_redirect_url == 'uam')
-					ctx.query_string.userurl = portal.uam_url(ctx, 'success');
-				portal.allow_client(ctx);
+				let redir =  (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : null;
+				portal.allow_client(ctx, redir);
 				return;
 			}
 		}

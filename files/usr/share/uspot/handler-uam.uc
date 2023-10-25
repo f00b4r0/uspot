@@ -36,10 +36,8 @@ function auth_client(ctx) {
 
         let auth = portal.uspot_auth(ctx, username, password, challenge, payload);
 	if (auth && auth['access-accept']) {
-		if (ctx.config.final_redirect_url == 'uam')
-			ctx.query_string.userurl = portal.uam_url(ctx, 'success');
-
-		portal.allow_client(ctx);
+		let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : null;
+		portal.allow_client(ctx, redir);
 		return;
 	}
 
@@ -51,7 +49,8 @@ function auth_client(ctx) {
 
 // disconnect client
 function deauth_client(ctx) {
-	portal.logoff(ctx, true);
+	let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'logoff') : null;
+	portal.logoff_client(ctx, redir);
 }
 
 global.handle_request = function(env) {

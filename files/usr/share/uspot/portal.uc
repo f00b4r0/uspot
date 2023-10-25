@@ -84,9 +84,9 @@ return {
 	},
 
 	// give a client access to the internet
-	allow_client: function(ctx) {
-		if (ctx.query_string.userurl)
-			include('templates/redir.ut', { redir_location: ctx.query_string.userurl });
+	allow_client: function(ctx, redir_location) {
+		if (redir_location)
+			include('templates/redir.ut', { redir_location });
 		else
 			include('templates/allow.ut', ctx);
 
@@ -98,10 +98,10 @@ return {
 	},
 
 	// put a client back into pre-auth state
-	logoff: function(ctx, uam) {
+	logoff_client: function(ctx, redir_location) {
 		this.syslog(ctx, 'logging client off');
-		if (uam)
-			include('templates/redir.ut', { redir_location: this.uam_url(ctx, 'logoff') });
+		if (redir_location)
+			include('templates/redir.ut', { redir_location });
 		else
 			include('templates/logoff.ut', ctx);
 

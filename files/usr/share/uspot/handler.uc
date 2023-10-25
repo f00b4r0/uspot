@@ -119,26 +119,28 @@ function request_radius(ctx) {
 global.handle_request = function(env) {
 	let ctx = portal.handle_request(env);
 
-	if (ctx)
-		if (ctx.connected) {
-			include('templates/connected.uc', ctx);
-			return;
-		}
+	if (!ctx)
+		return;
 
-		switch (ctx.form_data.action) {
-		case 'credentials':
-			request_credentials(ctx);
-			return;
-		case 'radius':
-			request_radius(ctx);
-			return;
-		case 'click':
-			request_click(ctx);
-			return;
-		default:
-			request_start(ctx);
-			return;
-		}
+	if (ctx.connected) {
+		include('templates/connected.uc', ctx);
+		return;
+	}
+
+	switch (ctx.form_data.action) {
+	case 'credentials':
+		request_credentials(ctx);
+		return;
+	case 'radius':
+		request_radius(ctx);
+		return;
+	case 'click':
+		request_click(ctx);
+		return;
+	default:
+		request_start(ctx);
+		return;
+	}
 };
 
 %}

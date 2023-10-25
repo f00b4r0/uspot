@@ -57,6 +57,9 @@ function deauth_client(ctx) {
 global.handle_request = function(env) {
 	let ctx = portal.handle_request(env);
 
+	if (!ctx)
+		return;
+
 	switch (split(ctx.env.REQUEST_URI, '?')[0] || '') {
 	case '/logon':
 		auth_client(ctx);

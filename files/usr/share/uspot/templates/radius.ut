@@ -1,7 +1,8 @@
 Status: 200 OK
 Content-Type: text/html
 
-{{ header }}
+{{ include(header) }}
+
 {% if (error): %}
 <h2> Invalid credentials </h2>
 {% endif %}
@@ -19,4 +20,4 @@ Content-Type: text/html
 <input type="submit" value="Login" class="btn btn-primary btn-block">
 </form>
 
-{{ footer }}
+{{ include(footer) }}

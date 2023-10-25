@@ -7,19 +7,12 @@
 import { urlencode, ENCODE_FULL } from 'lucihttp';
 
 let ubus = require('ubus');
-let fs = require('fs');
 let uci = require('uci').cursor();
 let config = uci.get_all('uspot');
-let nl = require("nl80211");
 let lib = require('uspotlib');
 
-let file = fs.open('/www-uspot/header.html', 'r');
-let header = file.read('all');
-file.close();
-
-file = fs.open('/www-uspot/footer.html', 'r');
-let footer = file.read('all');
-file.close();
+let header = '/www-uspot/header.html';
+let footer = '/www-uspot/footer.html';
 
 let devices = {};
 uci.foreach('uspot', 'uspot', (d) => {
@@ -51,6 +44,7 @@ uci.foreach('uspot', 'uspot', (d) => {
 });
 
 function lookup_station(mac) {
+	let nl = require("nl80211");
 	let wifs = nl.request(nl.const.NL80211_CMD_GET_INTERFACE, nl.const.NLM_F_DUMP);
 	for (let wif in wifs) {
 		if (!(wif.ifname in devices))

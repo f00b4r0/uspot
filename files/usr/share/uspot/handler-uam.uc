@@ -59,7 +59,7 @@ global.handle_request = function(env) {
 	if (!ctx)
 		return;
 
-	switch (split(ctx.env.REQUEST_URI, '?')[0] || '') {
+	switch (ctx.env.SCRIPT_NAME) {
 	case '/logon':
 		auth_client(ctx);
 		break;

@@ -64,11 +64,11 @@ function lookup_station(mac) {
 	}
 }
 
-function spotfilter_device(spotfilter, mac)
+function spotfilter_device(uspot, mac)
 {
 	let uconn = ubus.connect();
 	let spot = uconn.call('spotfilter', 'client_get', {
-		interface: spotfilter,
+		interface: uspot,
 		address: mac,
 	});
 	return (spot?.device);
@@ -98,7 +98,7 @@ return {
 
 		// start accounting
 		ctx.ubus.call('uspot', 'client_enable', {
-			uspot: ctx.spotfilter,
+			uspot: ctx.uspot,
 			address: ctx.mac,
 		});
 	},
@@ -112,7 +112,7 @@ return {
 			include('templates/logoff.uc', ctx);
 
 		ctx.ubus.call('uspot', 'client_remove', {
-			uspot: ctx.spotfilter,
+			uspot: ctx.uspot,
 			address: ctx.mac,
 		});
 	},
@@ -120,7 +120,7 @@ return {
 	// request authentication from uspot backend, return reply 'access-accept': 0 or 1
 	uspot_auth: function(ctx, username, password, challenge, extra) {
 		let payload = {
-			uspot: ctx.spotfilter,
+			uspot: ctx.uspot,
 			address: ctx.mac,
 			client_ip: ctx.env.REMOTE_ADDR,
 			ssid: ctx.ssid,
@@ -186,15 +186,15 @@ return {
 			include('templates/error.uc', ctx);
 			return null;
 		}
-		ctx.spotfilter = lookup_station(ctx.mac) || devices[dev];	// fallback to rtnl device
-		ctx.config = config[ctx?.spotfilter] || {};
+		ctx.uspot = lookup_station(ctx.mac) || devices[dev];	// fallback to rtnl device
+		ctx.config = config[ctx?.uspot] || {};
 		ctx.format_mac = lib.format_mac(ctx.config.mac_format, ctx.mac);
 
 		// check if a client is already connected
 		ctx.ubus = ubus.connect();
 		let cdata;
 		cdata = ctx.ubus.call('uspot', 'client_get', {
-			uspot: ctx.spotfilter,
+			uspot: ctx.uspot,
 			address: ctx.mac,
 		});
 
@@ -207,7 +207,7 @@ return {
 		ctx.connected = !!length(cdata);	// cdata is empty for disconnected clients
 
 		if (!cdata.ssid) {
-			let device = spotfilter_device(ctx.spotfilter, ctx.mac);
+			let device = spotfilter_device(ctx.uspot, ctx.mac);
 			let hapd = ctx.ubus.call('hostapd.' + device, 'get_status');
 			cdata.ssid = hapd?.ssid || 'unknown';
 		}

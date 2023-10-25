@@ -85,6 +85,7 @@ return {
 
 	// give a client access to the internet
 	allow_client: function(ctx, redir_location) {
+		this.debug(ctx, 'allowing client');
 		if (redir_location)
 			include('templates/redir.ut', { redir_location });
 		else
@@ -99,7 +100,7 @@ return {
 
 	// put a client back into pre-auth state
 	logoff_client: function(ctx, redir_location) {
-		this.syslog(ctx, 'logging client off');
+		this.debug(ctx, 'logging client off');
 		if (redir_location)
 			include('templates/redir.ut', { redir_location });
 		else
@@ -187,8 +188,7 @@ return {
 
 		// check if a client is already connected
 		ctx.ubus = ubus.connect();
-		let cdata;
-		cdata = ctx.ubus.call('uspot', 'client_get', {
+		let cdata = ctx.ubus.call('uspot', 'client_get', {
 			uspot: ctx.uspot,
 			address: ctx.mac,
 		});
@@ -206,21 +206,22 @@ return {
 			let hapd = ctx.ubus.call('hostapd.' + device, 'get_status');
 			cdata.ssid = hapd?.ssid || 'unknown';
 		}
-		if (!cdata.sessionid) {
-			let sessionid = lib.generate_sessionid();
-			cdata.sessionid = sessionid;
-		}
+		if (!cdata.sessionid)
+			cdata.sessionid = lib.generate_sessionid();
+
 		ctx.ssid = cdata.ssid;
 		ctx.sessionid = cdata.sessionid;
 		ctx.seconds_remaining = cdata.seconds_remaining;
 
 		// split QUERY_STRING
-		if (env.QUERY_STRING)
+		if (env.QUERY_STRING) {
 			for (let chunk in split(env.QUERY_STRING, '&')) {
 				let m = match(chunk, /^([^=]+)=(.*)$/);
-				if (!m) continue;
+				if (!m)
+					continue;
 				ctx.query_string[m[1]] = replace(m[2], /%([[:xdigit:]][[:xdigit:]])/g, (m, h) => chr(hex(h) || 0x20));
 			}
+		}
 
 		// recv POST data
 		if (env.CONTENT_LENGTH > 0)
@@ -228,13 +229,15 @@ return {
 				post_data += replace(chunk, /[^[:graph:]]/g, '.');
 
 		// split POST data into an array
-		if (post_data)
+		if (post_data) {
 			for (let chunk in split(post_data, '&')) {
 				let var = split(chunk, '=');
 				if (length(var) != 2)
 					continue;
 				ctx.form_data[var[0]] = var[1];
 			}
+		}
+
 		return ctx;
 	}
 };

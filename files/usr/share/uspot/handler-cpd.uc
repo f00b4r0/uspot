@@ -9,11 +9,8 @@ global.handle_request = function(env) {
 	let redir = "http://" + env.HTTP_HOST + env.REQUEST_URI;
 	redir = urlencode(redir, ENCODE_FULL);
 
-	let cpd = {
-		addr: env.SERVER_ADDR,
-		redir,
-	};
+	let redir_location = `http://${env.SERVER_ADDR}/hotspot/?redir=${redir}`;
 
-	include('templates/cpd.ut', { cpd });
+	include('templates/redir.ut', { redir_location });
 };
 %}

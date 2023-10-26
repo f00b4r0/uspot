@@ -68,7 +68,7 @@ function spotfilter_device(uspot, mac)
 	return (spot?.device);
 }
 
-function PO(id, english) {
+function _(english) {
 	return english;
 }
 
@@ -163,7 +163,7 @@ return {
 		let form_data = {};
 		let query_string = {};
 		let post_data = '';
-		let ctx = { env, header, footer, mac, form_data, query_string, PO };
+		let ctx = { env, header, footer, mac, form_data, query_string, _ };
 		let dev;
 
 		// lookup the peers MAC

@@ -3,7 +3,7 @@ Content-Type: text/html
 
 {{ include(header) }}
 
-<h2> An Error occured </h2>
-<h2> Please try again </h2>
+<h2> {{ _('An error occurred') }} </h2>
+<h2> {{ _('Please try again') }} </h2>
 
 {{ include(footer) }}

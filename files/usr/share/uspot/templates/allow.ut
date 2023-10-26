@@ -3,6 +3,6 @@ Content-Type: text/html
 
 {{ include(header) }}
 
-<h1> Connected </h1>
+<h1> {{ _('Connected') }} </h1>
 
 {{ include(footer) }}

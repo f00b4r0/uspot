@@ -6,16 +6,21 @@ Content-Type: text/html
 {% if (error): %}
 <h1> {{ _('Please accept the terms of use') }} </h1>
 {% endif %}
+
 <h5 class="card-title">{{ _('Welcome!') }}</h5>
 <p class="card-text">{{ _('To access the Internet you must accept the Terms of Service.') }}</p>
 <hr>
+
 <form action="/hotspot" method="post">
-<input type="hidden" name="action" value="click">
-<input type="checkbox" name="accept_terms" value="clicked">{{ _('I accept the terms of use.') }}
-<input type="submit" value="{{ _('Accept Terms of Service') }}" class="btn btn-primary btn-block">
-{% if (query_string?.redir): %}
-<input type="hidden" name="redir" value="{{ query_string.redir }}">
-{% endif %}
+	<div class="form-group form-check">
+		<input type="checkbox" name="accept_terms" value="clicked" id="accept_terms" class="form-check-input">
+		<label class="form-check-label" for="accept_terms">{{ _('I accept the terms of use.') }}</label>
+	</div>
+	<input type="submit" value="{{ _('Accept Terms of Service') }}" class="btn btn-primary btn-block">
+	<input type="hidden" name="action" value="click">
+	{% if (query_string?.redir): %}
+	<input type="hidden" name="redir" value="{{ query_string.redir }}">
+	{% endif %}
 </form>
 
 {{ include(footer) }}

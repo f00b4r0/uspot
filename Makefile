@@ -4,7 +4,7 @@ PKG_NAME:=uspot
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=John Crispin <john@phrozen.org>
+PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -24,10 +24,14 @@ define Package/uspot/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/radius-client $(1)/usr/bin/radius-client
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uspot-das $(1)/usr/bin/uspot-das
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libuam.so $(1)/usr/lib/ucode/uam.so
-	$(INSTALL_DATA) ./files/etc/config/uspot $(1)/etc/config/uspot
+	$(INSTALL_CONF) ./files/etc/config/uspot $(1)/etc/config/uspot
 	$(INSTALL_BIN) ./files/etc/init.d/uspot $(1)/etc/init.d/uspot
 	$(CP) ./files/usr/bin $(1)/usr/
 	$(CP) ./files/usr/share $(1)/usr/
+endef
+
+define Package/uspot/conffiles
+/etc/config/uspot
 endef
 
 define Package/uspot-www

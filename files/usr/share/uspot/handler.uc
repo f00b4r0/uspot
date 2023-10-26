@@ -66,7 +66,7 @@ function request_credentials(ctx) {
 
 	// check if a username and password was provided
 	if (!ctx.form_data.username || !ctx.form_data.password) {
-		portal.debug(ctx, 'missing credentials\n');
+		portal.debug(ctx, 'missing credentials');
 		request_start({ ...ctx, error: 1 });
 		return;
 	}
@@ -79,7 +79,7 @@ function request_credentials(ctx) {
 	}
 
 	// auth failed
-	portal.debug(ctx, 'invalid credentials\n');
+	portal.debug(ctx, 'invalid credentials');
 	request_start({ ...ctx, error: 1 });
 }
 

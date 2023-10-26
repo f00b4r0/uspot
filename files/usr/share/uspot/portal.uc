@@ -89,7 +89,7 @@ return {
 		if (redir_location)
 			include('templates/redir.ut', { redir_location });
 		else
-			include('templates/allow.ut', ctx);
+			include('templates/connected.ut', ctx);
 
 		// start accounting
 		ctx.ubus.call('uspot', 'client_enable', {

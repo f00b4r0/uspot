@@ -1,8 +1,0 @@
-Status: 200 OK
-Content-Type: text/html
-
-{{ include(header) }}
-
-<h1> {{ _('Connected') }} </h1>
-
-{{ include(footer) }}

@@ -1,5 +1,5 @@
 Status: 200 OK
-Content-Type: text/html
+Content-Type: text/html; charset=UTF-8
 
 {{ include(header) }}
 

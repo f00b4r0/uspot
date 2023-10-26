@@ -16,10 +16,8 @@ function request_start(ctx) {
 		include('templates/click.ut', ctx);
 		return;
 	case 'credentials':
-		include('templates/credentials.ut', ctx);
-		return;
 	case 'radius':
-		include('templates/radius.ut', ctx);
+		include('templates/credentials.ut', ctx);
 		return;
 	case 'uam':
 		// try mac-auth first if enabled
@@ -58,19 +56,19 @@ function request_click(ctx) {
 	portal.allow_client(ctx);
 }
 
-// delegate a local username/password authentication
+// delegate username/password authentication
 function request_credentials(ctx) {
 	// make sure this is the right auth_mode
-	if (ctx.config.auth_mode != 'credentials') {
+	if (ctx.config.auth_mode != ctx.form_data.action) {
 		include('templates/error.ut', ctx);
-                return;
+		return;
 	}
 
 	// check if a username and password was provided
 	if (!ctx.form_data.username || !ctx.form_data.password) {
 		portal.debug(ctx, 'missing credentials\n');
 		request_start({ ...ctx, error: 1 });
-                return;
+		return;
 	}
 
 	// check if the credentials are valid
@@ -79,36 +77,6 @@ function request_credentials(ctx) {
 		portal.allow_client(ctx);
 		return;
 	}
-
-	// auth failed
-	portal.debug(ctx, 'invalid credentials\n');
-	request_start({ ...ctx, error: 1 });
-}
-
-// delegate a radius username/password authentication
-function request_radius(ctx) {
-	// make sure this is the right auth_mode
-	if (ctx.config.auth_mode != 'radius') {
-		include('templates/error.ut', ctx);
-                return;
-	}
-
-	// check if a username and password was provided
-	if (!ctx.form_data.username || !ctx.form_data.password) {
-		portal.debug(ctx, 'missing credentials\n');
-		request_start({ ...ctx, error: 1 });
-                return;
-	}
-
-	// trigger the radius auth
-	let username = ctx.form_data.username;
-	let password = ctx.form_data.password;
-
-        let auth = portal.uspot_auth(ctx, username, password);
-	if (auth && auth['access-accept']) {
-                portal.allow_client(ctx);
-                return;
-        }
 
 	// auth failed
 	portal.debug(ctx, 'invalid credentials\n');
@@ -128,10 +96,8 @@ global.handle_request = function(env) {
 
 	switch (ctx.form_data.action) {
 	case 'credentials':
-		request_credentials(ctx);
-		return;
 	case 'radius':
-		request_radius(ctx);
+		request_credentials(ctx);
 		return;
 	case 'click':
 		request_click(ctx);

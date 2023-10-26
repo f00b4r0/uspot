@@ -1,4 +1,4 @@
-Status: 200 OK
+Status: 500 Internal Server Error
 Content-Type: text/html
 
 {{ include(header) }}

@@ -96,10 +96,12 @@ function client_remove(uspot, mac)
 	client_state(uspot, mac, 0);
 
 	// purge existing connections
-	if (client.ip4addr) {
-		system('conntrack -D -s ' + client.ip4addr);
-		// keep neighs in sync
-		delete uspots[uspot].neighs[client.ip4addr];
+	for (let ipaddr in [client.ip4addr, client.ip6addr]) {
+		if (ipaddr) {
+			system('conntrack -D -s ' + ipaddr);
+			// keep neighs in sync
+			delete uspots[uspot].neighs[ipaddr];
+		}
 	}
 
 	delete uspots[uspot].clients[mac];
@@ -117,8 +119,11 @@ function rtnl_neigh_cb(msg)
 	if (!dst || !dev)
 		return;
 
-	// only deal with ip4 for now
 	switch (family) {
+	case rtnl.const.AF_INET6:
+		if (substr(dst, 0, 4) == "fe80")
+			return;	// ignore link local addresses
+		// fallthrough
 	case rtnl.const.AF_INET:
 		break;
 	default:
@@ -140,10 +145,18 @@ function rtnl_neigh_cb(msg)
 	case rtnl.const.NUD_REACHABLE:
 		if (!neigh) {
 			uspots[uspot].neighs[dst] = { mac };
-			if (client)
-				client.ip4addr = dst;
-			else
-				uspots[uspot].clients[mac] = { ip4addr: dst };
+			if (client) {
+				if (rtnl.const.AF_INET6 == family)
+					client.ip6addr = dst;
+				else
+					client.ip4addr = dst;
+			}
+			else {
+				if (rtnl.const.AF_INET6 == family)
+					uspots[uspot].clients[mac] = { ip6addr: dst };
+				else
+					uspots[uspot].clients[mac] = { ip4addr: dst };
+			}
 		}
 		if (client)
 			delete client.idle_since;
@@ -156,9 +169,19 @@ function rtnl_neigh_cb(msg)
 	case rtnl.const.NUD_INCOMPLETE:
 		// lladdr is no longer available in these states
 		if (neigh) {
-			client_remove(uspot, neigh.mac);
-			delete uspots[uspot].neighs[dst];
+			client = uspots[uspot].clients[neigh.mac];
+			if (client) {
+				// check dst matches current client ipaddr as ip change could occur (ipv6 privacy randomisation)
+				if ((rtnl.const.AF_INET6 == family) && (dst == client.ip6addr))
+					delete client.ip6addr;
+				else if ((rtnl.const.AF_INET == family) && (dst == client.ip4addr))
+					delete client.ip4addr;
+				// purge client if both ip4/6 neigh addrs are gone
+				if (!client.ip4addr && !client.ip6addr)
+					client_remove(uspot, neigh.mac);
+			}
 			// we expect to eventually receive FAILED/INCOMPLETE messages for all added neighs
+			delete uspots[uspot].neighs[dst];
 		}
 		break;
 	}

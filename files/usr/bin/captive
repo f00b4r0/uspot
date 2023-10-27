@@ -94,7 +94,7 @@ case 'clients':
 		for (let c, val in clients) {
 			res[c] = {
 				status: val.state ? 'Authenticated' : 'Garden',
-	                        idle: val.idle || 0,
+				idle: val.idle || 0,
 				time: val.data.connect ? t - val.data.connect : 0,
 				ip4addr: val.ip4addr || '',
 				ip6addr: val.ip6addr || '',

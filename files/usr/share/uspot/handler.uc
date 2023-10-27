@@ -22,7 +22,7 @@ function request_start(ctx) {
 	case 'uam':
 		// try mac-auth first if enabled
 		if (+ctx.config.mac_auth) {
-		        let auth = portal.uspot_auth(ctx);
+			let auth = portal.uspot_auth(ctx);
 			if (auth && auth['access-accept']) {
 				let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : ctx.config.final_redirect_url;
 				portal.allow_client(ctx, redir);
@@ -43,14 +43,14 @@ function request_click(ctx) {
 	// make sure this is the right auth_mode
 	if (ctx.config.auth_mode != 'click-to-continue') {
 		include('templates/error.ut', ctx);
-                return;
+		return;
 	}
 
 	// check if a username and password was provided
 	if (ctx.form_data.accept_terms != 'clicked') {
 		portal.debug(ctx, 'user did not accept conditions');
 		request_start({ ...ctx, error: 1 });
-                return;
+		return;
 	}
 	portal.uspot_auth(ctx);
 	portal.allow_client(ctx);

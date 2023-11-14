@@ -863,7 +863,7 @@ function run_service() {
 		},
 		client_get: {
 			call: function(req) {
-				function client_get_data(client) {
+				function client_get_data(client, uspot, address) {
 					let data = {
 						... client.data || {},
 						duration: time() - client.connect,
@@ -898,12 +898,12 @@ function run_service() {
 						return {};
 
 					let client = uspots[uspot].clients[address];
-					return client_get_data(client);
+					return client_get_data(client, uspot, address);
 				}
 				else {
 					let payload = {};
 					for (let mac, client in uspots[uspot].clients)
-						payload[mac] = client_get_data(client);
+						payload[mac] = client_get_data(client, uspot, mac);
 					return payload;
 				}
 			},

@@ -25,8 +25,6 @@ global.handle_request = function(env) {
 
 		include('templates/api.ut', { api } );
 	}
-	else
-		include('templates/api.ut', { api: {} } );
 };
 
 %}

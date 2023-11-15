@@ -741,7 +741,7 @@ function run_service() {
 				let request = {
 					'User-Name': username,
 					'Calling-Station-Id': fmac,
-					'Called-Station-Id': settings.nas_mac + ':' + ssid,
+					'Called-Station-Id': settings.nas_mac + (ssid ? ':' + ssid : ''),
 					'Acct-Session-Id': sessionid,
 					'Framed-IP-Address': client_ip,
 					... reqdata || {},

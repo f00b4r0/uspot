@@ -118,10 +118,11 @@ return {
 			uspot: ctx.uspot,
 			address: ctx.mac,
 			client_ip: ctx.env.REMOTE_ADDR,
-			ssid: ctx.ssid,
 			sessionid: ctx.sessionid,
 			reqdata: { ... extra || {} },
 		};
+		if (ctx.ssid)
+			payload.ssid = ctx.ssid;
 		if (username)
 			payload.username = username;
 		if (password)
@@ -144,8 +145,9 @@ return {
 			'&ip=' + ctx.env.REMOTE_ADDR +
 			'&called=' + ctx.config.nasmac +
 			'&nasid=' + ctx.config.nasid +
-			'&ssid=' + ctx.ssid +
 			'&sessionid=' + ctx.sessionid;
+		if (ctx.ssid)
+			uam_url += '&ssid=' + ctx.ssid;
 		if (ctx.seconds_remaining)
 			uam_url += '&timeleft=' + ctx.seconds_remaining;
 		if (ctx.config.uam_sslurl)

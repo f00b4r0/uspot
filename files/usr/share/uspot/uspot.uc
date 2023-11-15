@@ -712,13 +712,13 @@ function run_service() {
 
 				// credentials
 				if (settings.auth_mode == 'credentials') {
-					let match = false;
+					let match = 0;
 					uci.foreach('uspot', 'credentials', (d) => {
 						// check if the credentials are valid
 						if (d.uspot != uspot)
 							return;
 						if (d.username == username && d.password == password)
-							match = true;
+							match = 1;
 					});
 					if (match)
 						client_create(uspot, address, payload);

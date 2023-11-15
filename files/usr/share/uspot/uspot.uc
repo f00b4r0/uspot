@@ -693,6 +693,10 @@ function run_service() {
 				let settings = uspots[uspot].settings;
 				address = uc(address);	// spotfilter uses ether_ntoa() which is uppercase
 
+				// if client is already created (==authenticated), return early
+				if (uspots[uspot].clients[address])
+					return { 'access-accept': 2 };
+
 				// prepare client payload
 				let payload = {
 					data: {
@@ -782,7 +786,7 @@ function run_service() {
 			 @param ssid: OPTIONAL: client SSID
 			 @param sessionid: OPTIONAL: accounting session ID
 			 @param reqdata: OPTIONAL: additional RADIUS request data - to be passed verbatim to radius-client
-			 @param return {object} "{"access-accept":N}" where N==1 if auth succeeded, 0 otherwise
+			 @param return {object} "{"access-accept":N}" where N==1 if auth succeeded, 2 if already auth'd, 0 otherwise
 
 			 operation:
 			  - call with (uspot, address, client_ip) -> click-to-continue or RADIUS MAC authentication
@@ -817,7 +821,9 @@ function run_service() {
 				if (!uspots[uspot].clients[address])
 					return ubus.STATUS_NOT_FOUND;
 
-				client_enable(uspot, address);
+				// if client is already enabled, do nothing
+				if (!uspots[uspot].clients[address].state)
+					client_enable(uspot, address);
 
 				return 0;
 			},

@@ -184,7 +184,7 @@ return {
 			include('templates/error.ut', ctx);
 			return null;
 		}
-		ctx.uspot = lookup_station(ctx.mac) || devices[dev];	// fallback to rtnl device
+		ctx.uspot = (+config?.def_captive?.tip_mode && lookup_station(ctx.mac)) || devices[dev];	// fallback to rtnl device
 		ctx.config = config[ctx?.uspot] || {};
 		ctx.format_mac = lib.format_mac(ctx.config.mac_format, ctx.mac);
 
@@ -203,7 +203,7 @@ return {
 		}
 		ctx.connected = !!length(cdata);	// cdata is empty for disconnected clients
 
-		if (!cdata.ssid) {
+		if (+config?.def_captive?.tip_mode && !cdata.ssid) {
 			let device = spotfilter_device(ctx.uspot, ctx.mac);
 			let hapd = ctx.ubus.call('hostapd.' + device, 'get_status');
 			cdata.ssid = hapd?.ssid || 'unknown';

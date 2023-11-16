@@ -144,7 +144,8 @@ function radius_call(uspot, mac, payload) {
 
 	let reply = json_cmd('/usr/bin/radius-client ' + path);
 
-	if (!+uspots[uspot].settings.debug)
+	// if debug level < 2, cleanup immediately
+	if (+uspots[uspot].settings.debug < 2)
 		fs.unlink(path);
 
 	return reply;

@@ -187,21 +187,25 @@ function rtnl_neigh_cb(msg)
 	}
 }
 
-function start()
+function flush_nftsets()
 {
 	for (let name, uspot in uspots) {
 		let setname = uspot.settings.setname;
 		let cmd = `nft -j flush set inet fw4 ${setname}`;
-
 		json_cmd(cmd);
 	}
+}
 
+function start()
+{
+	flush_nftsets();
 	rtnl.listener(rtnl_neigh_cb, null, [ rtnl.const.RTNLGRP_NEIGH ]);
 }
 
 function stop()
 {
-	start();
+	flush_nftsets();
+	// XXX flush conntrack?
 }
 
 /*

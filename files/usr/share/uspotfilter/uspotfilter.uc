@@ -93,6 +93,8 @@ function client_remove(uspot, mac)
 	if (!client)
 		return 0;
 
+	debug(uspot, mac, 'client_remove');
+
 	client_state(uspot, mac, 0);
 
 	// purge existing connections
@@ -110,6 +112,7 @@ function client_remove(uspot, mac)
 // parse netlink NEIGH messages
 function rtnl_neigh_cb(msg)
 {
+	let cmd = msg.cmd;
 	msg = msg.msg;
 	let mac = msg?.lladdr;
 	let dev = msg?.dev;
@@ -140,34 +143,8 @@ function rtnl_neigh_cb(msg)
 
 	let state = msg.state;
 
-	// process REACHABLE / STALE / FAILED and INCOMPLETE neighbour states
-	switch (state) {
-	case rtnl.const.NUD_REACHABLE:
-		if (!neigh) {
-			uspots[uspot].neighs[dst] = { mac };
-			if (client) {
-				if (rtnl.const.AF_INET6 == family)
-					client.ip6addr = dst;
-				else
-					client.ip4addr = dst;
-			}
-			else {
-				if (rtnl.const.AF_INET6 == family)
-					uspots[uspot].clients[mac] = { ip6addr: dst };
-				else
-					uspots[uspot].clients[mac] = { ip4addr: dst };
-			}
-		}
-		if (client)
-			delete client.idle_since;
-		break;
-	case rtnl.const.NUD_STALE:
-		if (client && !client.idle_since)
-			client.idle_since = time();
-		break;
-	case rtnl.const.NUD_FAILED:
-	case rtnl.const.NUD_INCOMPLETE:
-		// lladdr is no longer available in these states
+	function del_neigh()
+	{
 		if (neigh) {
 			client = uspots[uspot].clients[neigh.mac];
 			if (client) {
@@ -180,10 +157,46 @@ function rtnl_neigh_cb(msg)
 				if (!client.ip4addr && !client.ip6addr)
 					client_remove(uspot, neigh.mac);
 			}
-			// we expect to eventually receive FAILED/INCOMPLETE messages for all added neighs
+			// we expect to eventually receive FAILED/INCOMPLETE or DELNEIGH messages for all added neighs
 			delete uspots[uspot].neighs[dst];
 		}
-		break;
+	}
+
+	// new and updated neighs are cmd RTM_NEWNEIGH. Deleted neighs are RTM_DELNEIGH
+	if (rtnl.const.RTM_DELNEIGH == cmd)
+		del_neigh();
+	else {	// RTM_NEWNEIGH
+		// process REACHABLE / STALE / FAILED and INCOMPLETE neighbour states
+		switch (state) {
+			case rtnl.const.NUD_REACHABLE:
+				if (!neigh) {
+					uspots[uspot].neighs[dst] = { mac };
+					if (client) {
+						if (rtnl.const.AF_INET6 == family)
+							client.ip6addr = dst;
+						else
+							client.ip4addr = dst;
+					}
+					else {
+						if (rtnl.const.AF_INET6 == family)
+							uspots[uspot].clients[mac] = { ip6addr: dst };
+						else
+							uspots[uspot].clients[mac] = { ip4addr: dst };
+					}
+				}
+				if (client)
+					delete client.idle_since;
+				break;
+			case rtnl.const.NUD_STALE:
+				if (client && !client.idle_since)
+					client.idle_since = time();
+				break;
+			case rtnl.const.NUD_FAILED:
+			case rtnl.const.NUD_INCOMPLETE:
+				// lladdr is no longer available in these states
+				del_neigh();
+				break;
+		}
 	}
 }
 

@@ -15,6 +15,8 @@ The software consists of several parts:
 - A client management backend handling client authentication and accounting
 - A RADIUS Dynamic Authorization Server for RFC5176 support
 
+uspot requires OpenWrt 23.05 or newer.
+
 ## Configuration
 
 The available configuration options and their defaults are listed in the provided [files/etc/config/uspot] configuration file.
@@ -131,6 +133,8 @@ The optional rule `Allow-captive-DAE` allows incoming WAN traffic to the local R
 It is highly recommended to add restrictions on allowed source IP, since the server is very simple and does not implement
 any security defense mechanism.
 
+Note: uspot is compatible with firewall offloading.
+
 ### config/dhcp
 
 ```
@@ -216,13 +220,18 @@ and bypass the web interface by using e.g. the following extra DHCP script:
 ```sh
 #!/bin/sh
 
+ACTION="$1"
 MAC="$2"
 IP="$3"
 NETID="${DNSMASQ_TAGS%% *}"
 
 if [ "captive" == "$NETID" ]; then
-	ubus call uspot client_auth "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\", \"client_ip\":\"$IP\" }" > /dev/null
-	ubus call uspot client_enable "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\" }" 2>/dev/null	# this will fail anyway if auth was denied
+	case "$ACTION" in
+	add|old)
+		ubus call uspot client_auth "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\", \"client_ip\":\"$IP\" }" > /dev/null
+		ubus call uspot client_enable "{ \"uspot\":\"$NETID\", \"address\":\"$MAC\" }" 2>/dev/null	# this will fail anyway if auth was denied
+	;;
+	esac
 fi
 ```
 
@@ -243,3 +252,32 @@ uci commit dhcp
 
 When a client connects to the network, if its MAC is authorized the script will automatically authenticate the client
 with the captive portal, without further action. 
+
+## UAM interface
+
+When configured for UAM operation, the follwing UAM URL parameters are provided by uspot in the query string to the remote UAM server:
+
+ - `res`: can be one of `success`, `reject`, `notyet` and `logoff`
+ - `uamip`: the uspot local web server address
+ - `uamport`: the uspot local UAM server port (as configured with `uam_port` configuration option)
+ - `challenge`: MD5 challenge string (from `challenge` configuration option + formatted MAC address)
+ - `mac`: the formatted (via optional `format_mac` configuration option) client MAC address
+ - `ip`: the web client IP address
+ - `called`: the configured `nasmac`
+ - `nasid`: the configured `nasid`
+ - `sessionid`: the unique session identifier for this client request
+
+Optionally, depending on local configuration and/or RADIUS parameters, the following extra parameters may be provided:
+
+ - `timeleft`: seconds remaining for sessions with a set timeout
+ - `ssl`: the configured `uam_sslurl` (urlencoded)
+ - `userurl`: when CPD is used, the user-provided URL that was caught (urlencoded)
+ - `md`: when `uam_secret` is configured, the UAM URL MD5 checksum 
+
+## Caveat
+
+uspot has been primarily written and tested for IPv4 captive clients.
+
+## TODO
+
+UI internationalization (i18n)

@@ -145,7 +145,7 @@ function rtnl_neigh_cb(msg)
 	function del_neigh()
 	{
 		if (neigh) {
-			client = uspots[uspot].clients[neigh.mac];
+			client = uspots[uspot].clients[neigh];
 			if (client) {
 				// check dst matches current client ipaddr as ip change could occur (ipv6 privacy randomisation)
 				if ((rtnl.const.AF_INET6 == family) && (dst == client.ip6addr))
@@ -154,7 +154,7 @@ function rtnl_neigh_cb(msg)
 					delete client.ip4addr;
 				// purge client if both ip4/6 neigh addrs are gone
 				if (!client.ip4addr && !client.ip6addr)
-					client_remove(uspot, neigh.mac);
+					client_remove(uspot, neigh);
 			}
 			// we expect to eventually receive FAILED/INCOMPLETE or DELNEIGH messages for all added neighs
 			delete uspots[uspot].neighs[dst];
@@ -168,23 +168,20 @@ function rtnl_neigh_cb(msg)
 		// process REACHABLE / STALE / FAILED neighbour states
 		switch (state) {
 			case rtnl.const.NUD_REACHABLE:
-				if (!neigh) {
-					uspots[uspot].neighs[dst] = { mac };
-					if (client) {
-						if (rtnl.const.AF_INET6 == family)
-							client.ip6addr = dst;
-						else
-							client.ip4addr = dst;
-					}
-					else {
-						if (rtnl.const.AF_INET6 == family)
-							uspots[uspot].clients[mac] = { ip6addr: dst };
-						else
-							uspots[uspot].clients[mac] = { ip4addr: dst };
-					}
-				}
-				if (client)
+				uspots[uspot].neighs[dst] = mac;
+				if (client) {
 					delete client.idle_since;
+					if (rtnl.const.AF_INET6 == family)
+						client.ip6addr = dst;
+					else
+						client.ip4addr = dst;
+				}
+				else {
+					if (rtnl.const.AF_INET6 == family)
+						uspots[uspot].clients[mac] = { ip6addr: dst };
+					else
+						uspots[uspot].clients[mac] = { ip4addr: dst };
+				}
 				break;
 			case rtnl.const.NUD_STALE:
 				if (client && !client.idle_since)

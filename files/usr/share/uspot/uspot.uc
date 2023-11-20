@@ -15,6 +15,8 @@ let uci = require('uci').cursor();
 let lib = require('uspotlib');
 let uspots = {};
 
+let tip_mode = uci.get('uspot', 'def_captive', 'tip_mode');
+
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	if (!d[".anonymous"]) {
 		let accounting = !!(d.acct_server && d.acct_secret);
@@ -459,13 +461,15 @@ function client_kick(uspot, mac, remove) {
 
 	uconn.call('spotfilter', remove ? 'client_remove' : 'client_set', payload);
 
-	let client = uspots[uspot].clients[mac];
+	if (+tip_mode) {
+		let client = uspots[uspot].clients[mac];
 
-	// purge existing connections (XXX keep this here as 'regular' spotfilter doesn't handle this yet)
-	if (client.ip4addr)
-		system('conntrack -D -s ' + client.ip4addr);
-	if (client.ip6addr)
-		system('conntrack -D -s ' + client.ip6addr);
+		// purge existing connections (XXX keep this here as 'regular' spotfilter doesn't handle this yet)
+		if (client.ip4addr)
+			system('conntrack -D -s ' + client.ip4addr);
+		if (client.ip6addr)
+			system('conntrack -D -s ' + client.ip6addr);
+	}
 
 	// delete ratelimit rules if any
 	uconn.call('ratelimit', 'client_delete', { address: mac });

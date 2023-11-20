@@ -130,6 +130,24 @@ function radius_init(uspot, mac, payload, auth) {
 	return payload;
 }
 
+/*
+ XXX TODO
+
+ Suggested by Jo, to avoid the overhead of hitting the filesystem.
+ Requires currently non-existent 'blobmsg_add_json_from_fd()' libblobmsg wrapper around 'json_object_from_fd()'
+ so that radius-client can read json from stdin.
+
+ let input = fs.pipe();
+ let proc = fs.popen(`exec ${input[1].fileno()}>&-; radius-client <&${input[0].fileno()}`, 'r');
+
+ input[1].write(payload);
+ input[1].close();
+ input[0].close();
+
+ let stdout = proc.read("all");
+ proc.close();
+ */
+
 /**
  * Execute "radius-client" with the provided RADIUS payload, return reply.
  *

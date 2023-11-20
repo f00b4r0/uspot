@@ -341,7 +341,8 @@ function client_ratelimit(uspot, mac) {
 		args.rate_ingress = sprintf('%s', maxup);
 
 	uconn.call('ratelimit', 'client_set', args);
-	syslog(uspot, mac, 'ratelimiting client: ' + maxdown + '/' + maxup);
+	if (!uconn.error())
+		syslog(uspot, mac, 'ratelimiting client: ' + maxdown + '/' + maxup);
 }
 
 /**
@@ -445,15 +446,17 @@ function client_enable(uspot, mac) {
 		data: uspots[uspot].settings.debug ? client : {},
 	});
 
-	uspots[uspot].clients[mac] = client;
-	syslog(uspot, mac, 'adding client');
+	if (!uconn.error()) {
+		uspots[uspot].clients[mac] = client;
+		syslog(uspot, mac, 'adding client');
 
-	// start RADIUS accounting
-	if (accounting && radius?.request)
-		radius_start(uspot, mac);
+		// start RADIUS accounting
+		if (accounting && radius?.request)
+			radius_start(uspot, mac);
 
-	// apply ratelimiting rules, if any
-	client_ratelimit(uspot, mac);
+		// apply ratelimiting rules, if any
+		client_ratelimit(uspot, mac);
+	}
 }
 
 /**

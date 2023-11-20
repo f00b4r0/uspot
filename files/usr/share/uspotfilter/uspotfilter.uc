@@ -166,7 +166,7 @@ function rtnl_neigh_cb(msg)
 	if (rtnl.const.RTM_DELNEIGH == cmd)
 		del_neigh();
 	else {	// RTM_NEWNEIGH
-		// process REACHABLE / STALE / FAILED and INCOMPLETE neighbour states
+		// process REACHABLE / STALE / FAILED neighbour states
 		switch (state) {
 			case rtnl.const.NUD_REACHABLE:
 				if (!neigh) {
@@ -192,7 +192,6 @@ function rtnl_neigh_cb(msg)
 					client.idle_since = time();
 				break;
 			case rtnl.const.NUD_FAILED:
-			case rtnl.const.NUD_INCOMPLETE:
 				// lladdr is no longer available in these states
 				del_neigh();
 				break;

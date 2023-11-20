@@ -72,7 +72,22 @@ function client_state(uspot, mac, state)
 {
 	let settings = uspots[uspot].settings;
 	let op = state ? 'add' : 'delete';
-	return system(`nft ${op} element inet fw4 ${settings.setname} { ${mac} }`);
+	let ret = system(`nft ${op} element inet fw4 ${settings.setname} { ${mac} }`);
+
+	if (!state) {
+		let client = uspots[uspot].clients[mac];
+
+		if (!client)
+			return ret;
+
+		// purge existing connections
+		for (let ipaddr in [client.ip4addr, client.ip6addr]) {
+			if (ipaddr)
+				system('conntrack -D -s ' + ipaddr);
+		}
+	}
+
+	return ret;
 }
 
 function client_allowed(uspot, mac)
@@ -87,23 +102,9 @@ function client_allowed(uspot, mac)
 
 function client_remove(uspot, mac)
 {
-	let client = uspots[uspot].clients[mac];
-
-	if (!client)
-		return 0;
-
 	debug(uspot, mac, 'client_remove');
 
 	client_state(uspot, mac, 0);
-
-	// purge existing connections
-	for (let ipaddr in [client.ip4addr, client.ip6addr]) {
-		if (ipaddr) {
-			system('conntrack -D -s ' + ipaddr);
-			// keep neighs in sync
-			delete uspots[uspot].neighs[ipaddr];
-		}
-	}
 
 	delete uspots[uspot].clients[mac];
 }

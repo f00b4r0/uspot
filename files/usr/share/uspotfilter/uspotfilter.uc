@@ -67,13 +67,12 @@ function json_cmd(cmd) {
 	return reply;
 }
 
+// NB: fw4 does not touch set content when reloading
 function client_state(uspot, mac, state)
 {
 	let settings = uspots[uspot].settings;
 	let op = state ? 'add' : 'delete';
-	let cmd = `nft -j ${op} element inet fw4 ${settings.setname} { ${mac} }`;
-
-	return json_cmd(cmd);
+	return system(`nft ${op} element inet fw4 ${settings.setname} { ${mac} }`);
 }
 
 function client_allowed(uspot, mac)
@@ -203,8 +202,7 @@ function flush_nftsets()
 {
 	for (let name, uspot in uspots) {
 		let setname = uspot.settings.setname;
-		let cmd = `nft -j flush set inet fw4 ${setname}`;
-		json_cmd(cmd);
+		system(`nft flush set inet fw4 ${setname}`);
 	}
 }
 

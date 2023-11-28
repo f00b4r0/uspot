@@ -9,14 +9,22 @@ PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+
 define Package/uspot
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
   DEPENDS:=+spotfilter +uhttpd-mod-ucode +libradcli +conntrack \
-	   +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +ucode-mod-uloop +ratelimit \
+	   +ucode +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +ucode-mod-uloop +ratelimit \
 	   +libubus +libubox +libuci +libblobmsg-json +liblucihttp-ucode
+endef
+
+define Package/uspot/description
+ This package implements a captive portal supporting click-to-continue,
+ simple credential-based as well as RADIUS authentication.
+ It is UAM capable, and has limited support for RFC5176
+ RADIUS Dynamic Authorization Extensions.
 endef
 
 define Package/uspot/install
@@ -34,6 +42,7 @@ define Package/uspot/conffiles
 /etc/config/uspot
 endef
 
+
 define Package/uspot-www
   SUBMENU:=Captive Portals
   SECTION:=net
@@ -42,16 +51,27 @@ define Package/uspot-www
   DEPENDS:=+uspot
 endef
 
+define Package/uspot-www/description
+ This package provides CSS and HTML templates for uspot UI.
+endef
+
 define Package/uspot-www/install
 	$(CP) ./files/www-uspot $(1)/
 endef
 
+
 define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=uspot limited implementation of spotfilter
+  TITLE:=uspot implementation of spotfilter
   PROVIDES:=spotfilter
   CONFLICTS:=spotfilter
+  DEPENDS:=+ucode +ucode-mod-uloop +ucode-mod-rtnl +nftables-json +conntrack
+endef
+
+define Package/uspotfilter/description
+ This package provides the nftables firewall interface to spotfilter.
+ It is compatible with firewall4.
 endef
 
 define Package/uspotfilter/install

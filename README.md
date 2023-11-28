@@ -19,7 +19,7 @@ uspot requires OpenWrt 23.05 or newer.
 
 ## Configuration
 
-The available configuration options and their defaults are listed in the provided [files/etc/config/uspot] configuration file.
+The available configuration options and their defaults are listed in the provided [uspot](files/etc/config/uspot) configuration file.
 
 To achieve a fully operational captive portal, additional components must be configured:
 - firewall for traffic management
@@ -276,7 +276,7 @@ Optionally, depending on local configuration and/or RADIUS parameters, the follo
 
 ## Caveat
 
-uspot has been primarily written and tested for IPv4 captive clients.
+uspot has been primarily tested with IPv4 captive clients.
 
 ## TODO
 

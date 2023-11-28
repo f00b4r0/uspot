@@ -92,17 +92,19 @@ case 'clients':
 		let t = time();
 
 		for (let c, val in clients) {
-			res[c] = {
-				status: val.state ? 'Authenticated' : 'Garden',
-				idle: val.idle || 0,
-				time: val.data.connect ? t - val.data.connect : 0,
-				ip4addr: val.ip4addr || '',
-				ip6addr: val.ip6addr || '',
-				packets_ul: val.acct_data?.packets_ul || 0,
-				bytes_ul: val.acct_data?.bytes_ul || 0,
-				packets_dl: val.acct_data?.packets_dl || 0,
-				bytes_dl: val.acct_data?.bytes_dl || 0,
-			};
+			if (val.state != null) {
+				res[c] = {
+					status: val.state ? 'Authenticated' : 'Garden',
+					idle: val.idle || 0,
+					time: val.data.connect ? t - val.data.connect : 0,
+					ip4addr: val.ip4addr || '',
+					ip6addr: val.ip6addr || '',
+					packets_ul: val.acct_data?.packets_ul || 0,
+					bytes_ul: val.acct_data?.bytes_ul || 0,
+					packets_dl: val.acct_data?.packets_dl || 0,
+					bytes_dl: val.acct_data?.bytes_dl || 0,
+				};
+			}
 		}
 		printf('%.J\n', res);
 	}
@@ -111,7 +113,7 @@ case 'restart':
 	restart();
 	break;
 case 'log':
-	system('logread -f | grep uspot:');
+	system('logread -e uspot');
 	break;
 case 'debugon':
 case 'debugoff':

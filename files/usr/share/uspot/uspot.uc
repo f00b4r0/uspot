@@ -74,10 +74,23 @@ function format_mac(uspot, mac) {
 }
 
 // wrapper for scraping external tools JSON stdout
-function json_cmd(cmd) {
+function json_cmd(cmd, input) {
+	let inpipe;
+
+	if (input != null) {
+		inpipe = fs.pipe();
+		cmd = `exec ${inpipe[1].fileno()}>&-; ${cmd} <&${inpipe[0].fileno()}`;
+	}
+
 	let stdout = fs.popen(cmd);
 	if (!stdout)
 		return null;
+
+	if (inpipe) {
+		inpipe[1].write(input);
+		inpipe[1].close();
+		inpipe[0].close();
+	}
 
 	let reply = null;
 	try {
@@ -130,24 +143,6 @@ function radius_init(uspot, mac, payload, auth) {
 	return payload;
 }
 
-/*
- XXX TODO
-
- Suggested by Jo, to avoid the overhead of hitting the filesystem.
- Requires currently non-existent 'blobmsg_add_json_from_fd()' libblobmsg wrapper around 'json_object_from_fd()'
- so that radius-client can read json from stdin.
-
- let input = fs.pipe();
- let proc = fs.popen(`exec ${input[1].fileno()}>&-; radius-client <&${input[0].fileno()}`, 'r');
-
- input[1].write(payload);
- input[1].close();
- input[0].close();
-
- let stdout = proc.read("all");
- proc.close();
- */
-
 /**
  * Execute "radius-client" with the provided RADIUS payload, return reply.
  *
@@ -157,18 +152,7 @@ function radius_init(uspot, mac, payload, auth) {
  * @returns {object} "radius-client" reply
  */
 function radius_call(uspot, mac, payload) {
-	let path = '/tmp/u' + (payload.acct ? "acct" : "auth") + (mac || payload['Acct-Session-Id']) + '.json';
-	let cfg = fs.open(path, 'w');
-	cfg.write(payload);
-	cfg.close();
-
-	let reply = json_cmd('/usr/bin/radius-client ' + path);
-
-	// if debug level < 2, cleanup immediately
-	if (+uspots[uspot].settings.debug < 2)
-		fs.unlink(path);
-
-	return reply;
+	return json_cmd('/usr/bin/radius-client /dev/stdin', payload);
 }
 
 // RADIUS Acct-Status-Type attributes

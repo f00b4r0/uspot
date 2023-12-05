@@ -40,6 +40,11 @@ function auth_client(ctx) {
 	let auth = portal.uspot_auth(ctx, username, password, challenge, payload);
 	ctx.reply_msg = auth?.reply?.['Reply-Message'];
 	if (auth && auth['access-accept']) {
+		// replicate computation done in uspot.uc:client_enable() to be able to send timeleft= to UAM frontend
+		// for new clients, ctx.seconds_remaining is unset here as it would only be populated after allow_client()
+		if (!ctx.seconds_remaining)
+			ctx.seconds_remaining = +(auth?.reply?.['Session-Timeout'] || ctx.config.session_timeout || 0);
+
 		let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : ctx.config.final_redirect_url;
 		portal.allow_client(ctx, redir);
 		return;

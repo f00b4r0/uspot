@@ -783,7 +783,6 @@ function run_service() {
 					client_create(uspot, address, payload);
 				}
 
-				delete radius.reply;
 				return radius;
 			},
 			/*

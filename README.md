@@ -272,6 +272,7 @@ Optionally, depending on local configuration and/or RADIUS parameters, the follo
  - `timeleft`: seconds remaining for sessions with a set timeout
  - `ssl`: the configured `uam_sslurl` (urlencoded)
  - `userurl`: when CPD is used, the user-provided URL that was caught (urlencoded)
+ - `reply`: the Reply-Message received from RADIUS (urlencoded)
  - `md`: when `uam_secret` is configured, the UAM URL MD5 checksum 
 
 ## Caveat

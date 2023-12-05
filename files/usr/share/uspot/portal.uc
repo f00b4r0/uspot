@@ -154,6 +154,8 @@ return {
 			uam_url += '&ssl=' + urlencode(ctx.config.uam_sslurl, ENCODE_FULL);
 		if (ctx.query_string?.redir)
 			uam_url += '&userurl=' + urlencode(ctx.query_string.redir, ENCODE_FULL);
+		if (ctx.reply_msg)
+			uam_url += '&reply=' + urlencode(ctx.reply_msg, ENCODE_FULL);
 		if (ctx.config.uam_secret)
 			uam_url += '&md=' + uam.md5(uam_url, ctx.config.uam_secret);
 		return uam_url;

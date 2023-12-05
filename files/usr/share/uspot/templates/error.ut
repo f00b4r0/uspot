@@ -3,7 +3,11 @@ Content-Type: text/html; charset=UTF-8
 
 {{ include(header) }}
 
-<h2> {{ _('An error occurred') }} </h2>
+<h1> {{ _('An error occurred') }} </h1>
+{% if (reply_msg): %}
+<h2> {{ reply_msg }} </h2>
+{% else %}
 <h2> {{ _('Please try again') }} </h2>
+{% endif %}
 
 {{ include(footer) }}

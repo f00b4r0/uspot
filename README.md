@@ -273,6 +273,7 @@ Optionally, depending on local configuration and/or RADIUS parameters, the follo
  - `ssl`: the configured `uam_sslurl` (urlencoded)
  - `userurl`: when CPD is used, the user-provided URL that was caught (urlencoded)
  - `reply`: the Reply-Message received from RADIUS (urlencoded)
+ - `lang`: passed to-from UAM frontend and reflected in RADIUS ChilliSpot-Lang attribute 
  - `md`: when `uam_secret` is configured, the UAM URL MD5 checksum 
 
 ## Caveat

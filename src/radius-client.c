@@ -58,6 +58,7 @@ enum {
 	RADIUS_NAS_PORT_TYPE,
 	RADIUS_CUI,
 	RADIUS_REPLY_MESSAGE,
+	RADIUS_LANG,
 	__RADIUS_MAX,
 };
 
@@ -79,6 +80,9 @@ static int cb_chap_challenge(void * p, size_t s, struct blob_attr *b);
 #define VENDORSPEC_WBAL			14122
 #define ATTR_WBAL_WISPR_LOCATION_NAME	2
 #define ATTR_WBAL_WISPR_LOGOFF_URL	3
+
+#define VENDORSPEC_CHILLI		14559
+#define ATTR_CHILLI_CHILLISPOT_LANG	7
 
 /** Internal keys to radcli association table */
 static const struct {
@@ -119,6 +123,7 @@ static const struct {
 	[RADIUS_NAS_PORT_TYPE] = { .attrid = PW_NAS_PORT_TYPE, },
 	[RADIUS_CUI] = { .attrid = PW_CHARGEABLE_USER_IDENTITY, },
 	[RADIUS_REPLY_MESSAGE] = { .attrid = PW_REPLY_MESSAGE, },
+	[RADIUS_LANG] = { .attrid = ATTR_CHILLI_CHILLISPOT_LANG, .vendorspec = VENDORSPEC_CHILLI, },
 };
 
 /**

@@ -34,6 +34,9 @@ function auth_client(ctx) {
 		return;
 	}
 
+	if (ctx.query_string.lang)
+		payload['ChilliSpot-Lang'] = ctx.query_string.lang;
+
 	let auth = portal.uspot_auth(ctx, username, password, challenge, payload);
 	ctx.reply_msg = auth?.reply?.['Reply-Message'];
 	if (auth && auth['access-accept']) {

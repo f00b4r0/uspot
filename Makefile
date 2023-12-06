@@ -41,6 +41,7 @@ define Package/uspot-www
   CATEGORY:=Network
   TITLE:=uspot default user interface files
   DEPENDS:=+uspot
+  PKGARCH:=all
 endef
 
 define Package/uspot-www/description
@@ -55,6 +56,7 @@ define Package/uspotfilter
   PROVIDES:=spotfilter
   CONFLICTS:=spotfilter
   DEPENDS:=+ucode +ucode-mod-uloop +ucode-mod-rtnl +nftables-json +conntrack
+  PKGARCH:=all
 endef
 
 define Package/uspotfilter/description

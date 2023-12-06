@@ -50,16 +50,16 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 });
 
 if (!uciload) {
-	let log = 'uspot: failed to load config';
-	system('logger ' + log);
+	let log = 'failed to load config';
+	system('logger -t uspot ' + log);
 	warn(log + '\n');
 	exit(1);
 }
 
 function syslog(uspot, mac, msg) {
-	let log = sprintf('uspot: %s %s %s', uspot, mac, msg);
+	let log = sprintf('%s %s %s', uspot, mac, msg);
 
-	system('logger \'' + log + '\'');
+	system('logger -t uspot \'' + log + '\'');
 	warn(log + '\n');
 }
 

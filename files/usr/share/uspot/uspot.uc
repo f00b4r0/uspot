@@ -315,18 +315,23 @@ function client_ratelimit(uspot, mac) {
 	if (!(+maxdown || +maxup))
 		return;
 
+	let rldata = {};
 	let args = {
 		device: client.device,
 		address: mac,
 	};
-	if (+maxdown)
+	if (+maxdown) {
 		args.rate_egress = sprintf('%s', maxdown);
-	if (+maxup)
+		rldata.maxdown = maxdown/1000;	// in kbps
+	}
+	if (+maxup) {
 		args.rate_ingress = sprintf('%s', maxup);
+		rldata.maxup = maxup/1000;	// in kbps
+	}
 
 	uconn.call('ratelimit', 'client_set', args);
 	if (!uconn.error())
-		syslog(uspot, mac, 'ratelimiting client: ' + maxdown + '/' + maxup);
+		client.data.ratelimit = rldata;
 }
 
 /**

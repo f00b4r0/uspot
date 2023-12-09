@@ -119,7 +119,6 @@ function radius_init(uspot, mac, payload, auth) {
 		payload.server = sprintf('%s:%s:%s', settings.auth_server, settings.auth_port, settings.auth_secret);
 		if (settings.auth_proxy)
 			payload.auth_proxy = settings.auth_proxy;
-		payload['NAS-Port-Type'] = 19;	// wireless
 	}
 	else {
 		payload.acct_server = sprintf('%s:%s:%s', settings.acct_server, settings.acct_port, settings.acct_secret);

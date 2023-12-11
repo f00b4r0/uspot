@@ -1,11 +1,29 @@
 Status: 200 OK
 Content-Type: text/html; charset=UTF-8
 
+{%
+
+function show_remaining_time(time) {
+	let s = time % 60;
+	time /= 60;
+	let m = time % 60;
+	time /= 60;
+	let h = time;
+
+	return _(`Time left: ${h}h ${m}m ${s}s`);
+}
+
+%}
+
 {{ include(header) }}
 
 <h1> {{ _('You are connected') }} </h1>
 {% if (reply_msg): %}
 <h2 id="replymsg"> {{ reply_msg }} </h2>
+{% endif %}
+
+{% if (seconds_remaining): %}
+<h2 id="timeleft"> {{ show_remaining_time(seconds_remaining) }} </h2>
 {% endif %}
 
 {{ include(footer) }}

@@ -5,7 +5,7 @@ Content-Type: text/html; charset=UTF-8
 
 <h1> {{ _('You are connected') }} </h1>
 {% if (reply_msg): %}
-<h2> {{ reply_msg }} </h2>
+<h2 id="replymsg"> {{ reply_msg }} </h2>
 {% endif %}
 
 {{ include(footer) }}

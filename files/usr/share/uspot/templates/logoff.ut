@@ -3,6 +3,6 @@ Content-Type: text/html; charset=UTF-8
 
 {{ include(header) }}
 
-<h1> {{ _('You are now logged off') }} </h1>
+<h1> {{ _('Logged off') }} </h1>
 
 {{ include(footer) }}

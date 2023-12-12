@@ -17,13 +17,13 @@ function show_remaining_time(time) {
 
 {{ include(header) }}
 
-<h1> {{ _('You are connected') }} </h1>
+<h1> {{ _('Connected') }} </h1>
 {% if (reply_msg): %}
-<h2 id="replymsg"> {{ reply_msg }} </h2>
+<p id="replymsg"> {{ reply_msg }} </p>
 {% endif %}
 
 {% if (seconds_remaining): %}
-<h2 id="timeleft"> {{ show_remaining_time(seconds_remaining) }} </h2>
+<p id="timeleft"> {{ show_remaining_time(seconds_remaining) }} </p>
 {% endif %}
 
 {{ include(footer) }}

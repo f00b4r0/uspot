@@ -4,11 +4,11 @@ Content-Type: text/html; charset=UTF-8
 {{ include(header) }}
 
 {% if (error): %}
-<h1> {{ _('Please accept the terms of use') }} </h1>
+<div class="alert alert-danger" role="alert"> {{ _('Please accept the terms of use') }} </div>
 {% endif %}
 
-<h5 class="card-title">{{ _('Welcome!') }}</h5>
-<p class="card-text">{{ _('To access the Internet you must accept the Terms of Service.') }}</p>
+<h1> {{ _('Welcome!') }} </h1>
+<p> {{ _('To access the Internet you must accept the Terms of Service.') }} </p>
 <hr>
 
 <form action="/hotspot" method="post">

@@ -5,17 +5,37 @@ A captive portal system for OpenWrt
 ## Description
 
 uspot implements a captive portal supporting click-to-continue, simple credential-based as well as RADIUS authentication.
-uspot is UAM capable, and has limited support for RFC5176 RADIUS Dynamic Authorization Extensions.
+uspot is UAM capable, supports RFC8908 Captive Portal API and has limited support for RFC5176 RADIUS Dynamic Authorization Extensions.
 
 It is intended to be an alternative to e.g. CoovaChilli/ChilliSpot, fully compatible with OpenWrt:
-it leverages existing OpenWrt tools such as uhttpd, dnsmasq, firewall, ucode.
+it leverages existing OpenWrt tools such as uhttpd, dnsmasq, firewall4, ucode.
 
 The software consists of several parts:
-- A web frontend handling client user interface and Captive Portal Detection duties
+- A web frontend handling client user interface, local UAM and Captive Portal Detection duties
 - A client management backend handling client authentication and accounting
+- A firewall wrapper managing client network access and disconnection detection
 - A RADIUS Dynamic Authorization Server for RFC5176 support
 
 uspot requires OpenWrt 23.05 or newer.
+
+### Features
+
+uspot supports 4 authentication modes:
+- `click-to-continue` provides a very simple "accept ToU and click to continue" interface
+- `credentials` provides a simple username/password authentication (usernames and passwords defined in configuration)
+- `radius` also provides a simple username/password authentication, but queries a RADIUS server for credentials validation
+- `uam` enables RADIUS UAM authentication using a remote web portal
+
+In `radius` and `uam` modes:
+- RADIUS accounting is supported (only 'Session-Time' is reported for now)
+- text and CHAP passwords are supported
+
+In `uam` mode, MAC-based authentication bypass is supported.
+
+uspot supports Captive Portal API (RFC8908), and supports some RADIUS DAE (RFC5176) Disconnect and CoA operations
+(see comments in [radius-das.c](src/radius-das.c) for details on which attributes are supported).
+
+In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot supports per-client bandwidth restriction.
 
 ## Configuration
 
@@ -144,7 +164,7 @@ config dhcp 'captive'
 	option limit '1000'
 	option leasetime '2h'
 	# add the following for RFC8910 Captive Portal API - DNS name is setup below
-	list dhcp_option_force '114,https://captive.example.org/api'
+	list dhcp_option '114,https://captive.example.org/api'
 	# optionally provide NTP server (if enabled on the device) - recommended for SSL cert validation
 	list dhcp_option_force '42,10.0.0.1'
 
@@ -282,4 +302,5 @@ uspot has been primarily tested with IPv4 captive clients.
 
 ## TODO
 
-UI internationalization (i18n)
+- UI internationalization (i18n)
+- traffic accounting

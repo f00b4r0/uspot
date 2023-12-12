@@ -3,6 +3,13 @@
 // SPDX-FileCopyrightText: 2023 Thibaut Varène <hacks@slashdirt.org>
 // uspotfilter - uspot interface to netfilter
 
+/*
+ A stateful wrapper around nftables and rtnl.
+
+ This daemon handles client firewall permissions (allowing/disallowing via a MAC nftables set)
+ and monitors netlink neigh updates to update client status (new/stale/gone and ip addresses).
+ */
+
 'use strict';
 
 let fs = require('fs');
@@ -67,7 +74,16 @@ function json_cmd(cmd) {
 	return reply;
 }
 
-// NB: fw4 does not touch set content when reloading
+/**
+ * Update client firewall state.
+ *
+ * @param {string} uspot the target uspot
+ * @param {string} mac the target client MAC address
+ * @param {boolean} state the intended state (true: allowed, false: denied)
+ * @returns {number} nft command exit code
+ *
+ * NB: fw4 does not touch set content when reloading: we don't need to add a reload handler
+ */
 function client_state(uspot, mac, state)
 {
 	let settings = uspots[uspot].settings;
@@ -90,6 +106,13 @@ function client_state(uspot, mac, state)
 	return ret;
 }
 
+/**
+ * Check if a client is already allowed
+ *
+ * @param {string} uspot the target uspot
+ * @param {string} mac the target client MAC address
+ * @returns {number} 1 if client is allowed, 0 otherwise
+ */
 function client_allowed(uspot, mac)
 {
 	let settings = uspots[uspot].settings;
@@ -100,6 +123,12 @@ function client_allowed(uspot, mac)
 	return (lc(mac) in elem) ? 1 : 0;
 }
 
+/**
+ * Disallow client access to the internet
+ *
+ * @param {string} uspot the target uspot
+ * @param {string} mac the target client MAC address
+ */
 function client_remove(uspot, mac)
 {
 	debug(uspot, mac, 'client_remove');
@@ -112,8 +141,8 @@ function client_remove(uspot, mac)
 // parse netlink NEIGH messages
 function rtnl_neigh_cb(msg)
 {
-	let cmd = msg.cmd;
-	msg = msg.msg;
+	let cmd = msg.cmd;	// NEIGH command
+	msg = msg.msg;		// NEIGH message
 	let mac = msg?.lladdr;
 	let dev = msg?.dev;
 	let dst = msg?.dst;
@@ -242,6 +271,11 @@ function run_service() {
 
 			return { ... uspots[uspot].clients[address] || {}, state, device, };
 		},
+		/*
+		 Get client data for a given uspot.
+		 @param interface: REQUIRED: target uspot
+		 @param address: REQUIRED: target client MAC address
+		 */
 		args: {
 			interface:"",
 			address:"",
@@ -282,6 +316,17 @@ function run_service() {
 
 			return 0;
 		},
+		/*
+		 Set client state in a given uspot.
+		 @param interface: REQUIRED: target uspot
+		 @param address: REQUIRED: target client MAC address
+		 @param id: IGNORED
+		 @param state: 1 to allow client, 0 to disallow
+		 @param dns_state: IGNORED
+		 @param accounting: IGNORED
+		 @param data: OPTIONAL client opaque data, stored with client state
+		 @param flush: OPTIONAL true to disallow client and delete associated data
+		 */
 		args: {
 			interface:"",
 			address:"",
@@ -309,6 +354,11 @@ function run_service() {
 
 			return 0;
 		},
+		/*
+		 Remove client from a given uspot.
+		 @param interface: REQUIRED: target uspot
+		 @param address: REQUIRED: target client MAC address
+		 */
 		args: {
 			interface:"",
 			address:"",
@@ -329,7 +379,7 @@ function run_service() {
 		},
 		/*
 		 List all clients for a given uspot.
-		 @param uspot: REQUIRED: target uspot
+		 @param interface: REQUIRED: target uspot
 		 */
 		args: {
 			interface:"",

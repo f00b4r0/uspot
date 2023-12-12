@@ -142,6 +142,9 @@ str_to_hex(const char *in, char *out, int osize)
 	int ilen = strlen(in);
 	int i;
 
+	if (!osize)
+		return -1;
+
 	for (i = 0; (i < ilen/2) && (i < osize - 1); i++) {
 		if (sscanf(&in[i * 2], "%2hhx", &out[i]) != 1)
 			return -1;
@@ -175,8 +178,7 @@ static int cb_chap_passwd(void *p, size_t s, struct blob_attr *b)
 	char *str = p;
 	int len;
 
-	assert(s >= 17);
-	len = str_to_hex(blobmsg_get_string(b), str+1, 16);
+	len = str_to_hex(blobmsg_get_string(b), str+1, s-1);
 
 	return len >= 0 ? len+1 : len;
 }
@@ -185,8 +187,7 @@ static int cb_chap_challenge(void *p, size_t s, struct blob_attr *b)
 {
 	char *str = p;
 
-	assert(s >= 16);
-	return str_to_hex(blobmsg_get_string(b), str, 16);
+	return str_to_hex(blobmsg_get_string(b), str, s);
 }
 
 static int

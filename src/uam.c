@@ -27,6 +27,9 @@ str_to_hex(const char *in, char *out, int osize)
 	int ilen = strlen(in);
 	int i;
 
+	if (!osize)
+		return 0;
+
 	for (i = 0; (i < ilen/2) && (i < osize - 1); i++) {
 		if (sscanf(&in[i * 2], "%2hhx", &out[i]) != 1)
 			break;	// truncate output on scan errors

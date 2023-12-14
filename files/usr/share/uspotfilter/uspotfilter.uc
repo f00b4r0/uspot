@@ -385,6 +385,29 @@ function run_service() {
 			interface:"",
 		}
 	},
+	peer_lookup: {
+		call: function(req) {
+			let ip = req.args.ip;
+
+			if (!ip)
+				return ubus.STATUS_INVALID_ARGUMENT;
+
+			for (let uspot, d in uspots) {
+				let neigh = d.neighs[ip];
+				if (neigh)
+					return { mac: lc(neigh), uspot };
+			}
+
+			return {};
+		},
+		/*
+		 Lookup a peer IP in internal neigh database to find its MAC and corresponding uspot.
+		 @param ip: REQUIRED: IP to lookup
+		 */
+		args: {
+			ip:"",
+		}
+	},
 	});
 
 	try {

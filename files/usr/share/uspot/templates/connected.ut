@@ -10,7 +10,7 @@ function show_remaining_time(time) {
 	time /= 60;
 	let h = time;
 
-	return _(`Time left: ${h}h ${m}m ${s}s`);
+	return _(`${h}h ${m}m ${s}s`);
 }
 
 %}
@@ -23,7 +23,7 @@ function show_remaining_time(time) {
 {% endif %}
 
 {% if (seconds_remaining): %}
-<p id="timeleft"> {{ show_remaining_time(seconds_remaining) }} </p>
+<p id="timeleft"> {{ _('Time left:') }} <time datetime="PT{{ seconds_remaining }}S">{{ show_remaining_time(seconds_remaining) }}</time> </p>
 {% endif %}
 
 {{ include(footer) }}

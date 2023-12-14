@@ -165,11 +165,6 @@ return {
 
 	handle_request: function(env) {
 		let rtnl = require('rtnl');
-		let mac;
-		let form_data = {};
-		let query_string = {};
-		let post_data = '';
-		let ctx = { env, header, footer, mac, form_data, query_string, _ };
 		let dev;
 
 		// lookup the peers MAC
@@ -179,6 +174,7 @@ return {
 				ctx.mac = n.lladdr;
 				dev = n.dev;
 				break;
+		let ctx = { env, header, footer, mac: null, form_data: {}, query_string: {}, _ };
 			}
 		}
 
@@ -230,17 +226,19 @@ return {
 		}
 
 		// recv POST data
-		if (env.CONTENT_LENGTH > 0)
+		if (env.CONTENT_LENGTH > 0) {
+			let post_data = '';
 			for (let chunk = uhttpd.recv(64); chunk != null; chunk = uhttpd.recv(64))
 				post_data += replace(chunk, /[^[:graph:]]/g, '.');
 
-		// split POST data into an array
-		if (post_data) {
-			for (let chunk in split(post_data, '&')) {
-				let var = split(chunk, '=');
-				if (length(var) != 2)
-					continue;
-				ctx.form_data[var[0]] = var[1];
+			// split POST data into an array
+			if (post_data) {
+				for (let chunk in split(post_data, '&')) {
+					let var = split(chunk, '=');
+					if (length(var) != 2)
+						continue;
+					ctx.form_data[var[0]] = var[1];
+				}
 			}
 		}
 

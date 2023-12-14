@@ -164,18 +164,38 @@ return {
 	},
 
 	handle_request: function(env) {
-		let rtnl = require('rtnl');
-		let dev;
-
-		// lookup the peers MAC
-		let neighs = rtnl.request(rtnl.const.RTM_GETNEIGH, rtnl.const.NLM_F_DUMP, { });
-		for (let n in neighs) {
-			if (n.dst == env.REMOTE_HOST && n.lladdr) {
-				ctx.mac = n.lladdr;
-				dev = n.dev;
-				break;
 		let ctx = { env, header, footer, mac: null, form_data: {}, query_string: {}, _ };
+
+		ctx.ubus = ubus.connect();
+
+		// try fast peer lookup first
+		let peer = ctx.ubus.call('spotfilter', 'peer_lookup', {
+			ip: env.REMOTE_ADDR,
+		});
+
+		if (length(peer)) {
+			ctx.mac = peer.mac;
+			ctx.uspot = peer.uspot;
+		}
+		else {	// fallback to deep lookup if fast lookup failed
+			let rtnl = require('rtnl');
+			let dev;
+			for (let n in rtnl.request(rtnl.const.RTM_GETNEIGH, rtnl.const.NLM_F_DUMP, { })) {
+				if (n.dst == env.REMOTE_ADDR && n.lladdr) {
+					ctx.mac = n.lladdr;
+					dev = n.dev;
+					break;
+				}
 			}
+
+			ctx.uspot = (+config?.def_captive?.tip_mode && lookup_station(ctx.mac)) || devices[dev];	// fallback to rtnl device
+		}
+
+		ctx.config = config[ctx.uspot];
+		if (!ctx.config) {
+			this.syslog(ctx, 'config not found for "' + ctx.uspot + '"');
+			include('templates/error.ut', ctx);
+			return null;
 		}
 
 		// if the MAC lookup failed, go to the error page
@@ -184,12 +204,10 @@ return {
 			include('templates/error.ut', ctx);
 			return null;
 		}
-		ctx.uspot = (+config?.def_captive?.tip_mode && lookup_station(ctx.mac)) || devices[dev];	// fallback to rtnl device
-		ctx.config = config[ctx?.uspot] || {};
+
 		ctx.format_mac = lib.format_mac(ctx.config.mac_format, ctx.mac);
 
 		// check if a client is already connected
-		ctx.ubus = ubus.connect();
 		let cdata = ctx.ubus.call('uspot', 'client_get', {
 			uspot: ctx.uspot,
 			address: ctx.mac,

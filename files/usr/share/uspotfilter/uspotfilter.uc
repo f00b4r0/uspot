@@ -172,7 +172,7 @@ function rtnl_neigh_cb(msg)
 
 	let state = msg.state;
 
-	function del_neigh()
+	function lost_neigh()
 	{
 		if (neigh) {
 			client = uspots[uspot].clients[neigh];
@@ -186,14 +186,28 @@ function rtnl_neigh_cb(msg)
 				if (!client.ip4addr && !client.ip6addr)
 					client_remove(uspot, neigh);
 			}
-			// we expect to eventually receive FAILED/INCOMPLETE or DELNEIGH messages for all added neighs
-			delete uspots[uspot].neighs[dst];
 		}
 	}
 
 	// new and updated neighs are cmd RTM_NEWNEIGH. Deleted neighs are RTM_DELNEIGH
-	if (rtnl.const.RTM_DELNEIGH == cmd)
-		del_neigh();
+	if (rtnl.const.RTM_DELNEIGH == cmd) {
+		switch (state) {
+			case rtnl.const.NUD_FAILED:
+				lost_neigh();
+				break;
+			default:
+				// NUD_STALE etc: mark allowed clients as idle, delete others.
+				// Linux may aggressively delete neighs to make room even though they are still around
+				// allowed idle clients will eventually be purged by uspot - idle_since can only be cleared when neigh is (re)set
+				if (client && !client.idle_since && client.state)
+					client.idle_since = time();
+				else
+					lost_neigh();
+				break;
+		}
+		// we expect to eventually receive DELNEIGH messages for all added neighs
+		delete uspots[uspot].neighs[dst];
+	}
 	else {	// RTM_NEWNEIGH
 		// process REACHABLE / STALE / FAILED neighbour states
 		switch (state) {
@@ -219,7 +233,8 @@ function rtnl_neigh_cb(msg)
 				break;
 			case rtnl.const.NUD_FAILED:
 				// lladdr is no longer available in these states
-				del_neigh();
+				lost_neigh();
+				delete uspots[uspot].neighs[dst];
 				break;
 		}
 	}

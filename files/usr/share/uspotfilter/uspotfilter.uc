@@ -314,8 +314,7 @@ function run_service() {
 			if (flush) {
 				if (!uspots[uspot].clients[address])
 					return 0;
-				client_state(uspot, address, 0);
-				delete uspots[uspot].clients[address];
+				client_remove(uspot, address);
 				return 0;
 			}
 

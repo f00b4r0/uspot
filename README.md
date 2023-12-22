@@ -50,7 +50,7 @@ The OpenWrt configuration snippets below assume that a dedicated network interfa
 and will be dedicated to the captive portal, and that a similarly named 'captive' uspot section is configured
 in `/etc/config/uspot`.
 
-The 'captive' network interface is assumed to have a static IPv4 address of '10.0.0.1'.
+The 'captive' network interface is assumed to have a static IPv4 address of '10.0.0.1/22'.
 The provided configuration sets up an IPv4 captive portal.
 
 ### config/firewall
@@ -78,6 +78,23 @@ config redirect
 	option reflection '0'
 	option ipset '!uspot'	# match with uspot option 'setname'
 
+# allow DHCP for captive clients
+config rule
+	option name 'Allow-DHCP-NTP-captive'
+	option src 'captive'
+	option proto 'udp'
+	option dest_port '67 123'
+	option target 'ACCEPT'
+
+# prevent access to LAN-side services from captive interface
+# Linux implements a weak host model and traffic crossing zone boundary isn't considered forwarding on the router:
+# it must be explicitely denied - NB order matter: DHCP is broadcast that would be caught by this rule
+config rule
+	option name 'Restrict-input-captive'
+	option src 'captive'
+	option dest_ip '!captive'
+	option target 'DROP'
+
 # allow incoming traffic to CPD / web interface and local UAM server
 config rule
 	option name 'Allow-captive-CPD-WEB-UAM'
@@ -94,14 +111,6 @@ config rule
 	option proto 'any'
 	option target 'ACCEPT'
 	option ipset 'uspot'	# match with uspot option 'setname'
-
-# allow DHCP for captive clients
-config rule
-	option name 'Allow-DHCP-NTP-captive'
-	option src 'captive'
-	option proto 'udp'
-	option dest_port '67 123'
-	option target 'ACCEPT'
 
 # allow DNS for captive clients
 config rule

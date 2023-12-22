@@ -456,7 +456,7 @@ function client_enable(uspot, mac) {
  * @param {boolean} remove calls 'spotfilter client_remove' if true, otherwise client state is only reset to 0
  */
 function client_kick(uspot, mac, remove) {
-	debug(uspot, mac, 'stopping accounting');
+	debug(uspot, mac, 'kicking client');
 	let payload = {
 		interface: uspot,
 		address: mac,

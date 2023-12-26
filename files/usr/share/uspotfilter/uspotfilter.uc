@@ -366,6 +366,9 @@ function run_service() {
 
 			address = uc(address);
 
+			if (!uspots[uspot].clients[address])
+				return 0;
+
 			client_remove(uspot, address);
 
 			return 0;

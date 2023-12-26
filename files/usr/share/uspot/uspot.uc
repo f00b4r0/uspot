@@ -256,7 +256,7 @@ function radius_interim(uspot, mac) {
 		'Acct-Status-Type': radat_interim,
 	};
 	radius_acct(uspot, mac, payload);
-	debug(uspot, mac, 'iterim acct call');
+	debug(uspot, mac, 'interim acct call');
 }
 
 /**
@@ -448,27 +448,21 @@ function client_enable(uspot, mac) {
 }
 
 /**
- * Kick a client from the system.
+ * Remove a client from the system.
  * This function deletes a client from the backend, and removes existing connection flows.
  *
  * @param {string} uspot the target uspot
  * @param {string} mac the client MAC address
- * @param {boolean} remove calls 'spotfilter client_remove' if true, otherwise client state is only reset to 0
+ * @param {string} reason the removal reason (for logging purposes)
  */
-function client_kick(uspot, mac, remove) {
-	debug(uspot, mac, 'kicking client');
+function client_remove(uspot, mac, reason) {
+	syslog(uspot, mac, reason);
 	let payload = {
 		interface: uspot,
 		address: mac,
-		...(remove ? {} : {
-			state: 0,
-			dns_state: 1,
-			accounting: [],
-			flush: true,
-		}),
 	};
 
-	uconn.call('spotfilter', remove ? 'client_remove' : 'client_set', payload);
+	uconn.call('spotfilter', 'client_remove', payload);
 
 	if (+tip_mode) {
 		let client = uspots[uspot].clients[mac];
@@ -484,16 +478,6 @@ function client_kick(uspot, mac, remove) {
 	uconn.call('ratelimit', 'client_delete', { address: mac });
 
 	delete uspots[uspot].clients[mac];
-}
-
-function client_remove(uspot, mac, reason) {
-	syslog(uspot, mac, reason);
-	client_kick(uspot, mac, true);
-}
-
-function client_reset(uspot, mac, reason) {
-	syslog(uspot, mac, reason);
-	client_kick(uspot, mac, false);
 }
 
 /**
@@ -572,19 +556,19 @@ function accounting(uspot) {
 		if ((+list[mac].idle > +client.idle) ||
 		    (+list[mac].idle_since && (t - list[mac].idle_since > +client.idle))) {
 			radius_terminate(uspot, mac, radtc_idleto);
-			client_reset(uspot, mac, 'idle event');
+			client_remove(uspot, mac, 'idle event');
 			continue;
 		}
 		let timeout = +client.session;
 		if (timeout && ((t - client.connect) > timeout)) {
 			radius_terminate(uspot, mac, radtc_sessionto);
-			client_reset(uspot, mac, 'session timeout');
+			client_remove(uspot, mac, 'session timeout');
 			continue;
 		}
 		let maxtotal = +client.max_total;
 		if (maxtotal && (((list[mac].acct_data?.bytes_ul || 0) + (list[mac].acct_data?.bytes_dl || 0)) >= maxtotal)) {
 			radius_terminate(uspot, mac, radtc_sessionto);
-			client_reset(uspot, mac, 'max octets reached');
+			client_remove(uspot, mac, 'max octets reached');
 			continue;
 		}
 
@@ -894,7 +878,7 @@ function run_service() {
 						// if timeout is exceeded, immediately kick client for consistency's sake
 						if (data.seconds_remaining <= 0) {
 							radius_terminate(uspot, address, radtc_sessionto);
-							client_reset(uspot, address, 'session timeout');
+							client_remove(uspot, address, 'session timeout');
 							return {};
 						}
 					}

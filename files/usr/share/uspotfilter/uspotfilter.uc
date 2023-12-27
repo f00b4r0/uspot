@@ -199,8 +199,11 @@ function rtnl_neigh_cb(msg)
 				// NUD_STALE etc: mark allowed clients as idle, delete others.
 				// Linux may aggressively delete neighs to make room even though they are still around
 				// allowed idle clients will eventually be purged by uspot - idle_since can only be cleared when neigh is (re)set
-				if (client && !client.idle_since && client.state)
-					client.idle_since = time();
+				// WARNING: thus the ONLY case where a client may avoid deletion here is IFF it is allowed by uspot
+				if (+client?.state) {
+					if (!client.idle_since)
+						client.idle_since = time();
+				}
 				else
 					lost_neigh();
 				break;

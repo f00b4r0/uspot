@@ -327,7 +327,8 @@ function run_service() {
 				data,
 			};
 
-			delete client.idle_since;	// clear up leftover idle time
+			if (state)
+				delete client.idle_since;	// clear up leftover idle time
 
 			uspots[uspot].clients[address] = client;
 

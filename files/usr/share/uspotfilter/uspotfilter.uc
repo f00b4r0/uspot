@@ -8,6 +8,8 @@
 
  This daemon handles client firewall permissions (allowing/disallowing via a MAC nftables set)
  and monitors netlink neigh updates to update client status (new/stale/gone and ip addresses).
+
+ TODO: IPv6 support
  */
 
 'use strict';
@@ -97,7 +99,7 @@ function client_state(uspot, mac, state)
 			return ret;
 
 		// purge existing connections
-		for (let ipaddr in [client.ip4addr, client.ip6addr]) {
+		for (let ipaddr in [client.ip4addr]) {
 			if (ipaddr)
 				system('conntrack -D -s ' + ipaddr);
 		}
@@ -152,10 +154,6 @@ function rtnl_neigh_cb(msg)
 		return;
 
 	switch (family) {
-	case rtnl.const.AF_INET6:
-		if (substr(dst, 0, 4) == "fe80")
-			return;	// ignore link local addresses
-		// fallthrough
 	case rtnl.const.AF_INET:
 		break;
 	default:
@@ -176,16 +174,8 @@ function rtnl_neigh_cb(msg)
 	{
 		if (neigh) {
 			client = uspots[uspot].clients[neigh];
-			if (client) {
-				// check dst matches current client ipaddr as ip change could occur (ipv6 privacy randomisation)
-				if ((rtnl.const.AF_INET6 == family) && (dst == client.ip6addr))
-					delete client.ip6addr;
-				else if ((rtnl.const.AF_INET == family) && (dst == client.ip4addr))
-					delete client.ip4addr;
-				// purge client if both ip4/6 neigh addrs are gone
-				if (!client.ip4addr && !client.ip6addr)
-					client_remove(uspot, neigh);
-			}
+			if (client && (dst == client.ip4addr))
+				client_remove(uspot, neigh);
 		}
 	}
 
@@ -218,16 +208,10 @@ function rtnl_neigh_cb(msg)
 				uspots[uspot].neighs[dst] = mac;
 				if (client) {
 					delete client.idle_since;
-					if (rtnl.const.AF_INET6 == family)
-						client.ip6addr = dst;
-					else
-						client.ip4addr = dst;
+					client.ip4addr = dst;
 				}
 				else {
-					if (rtnl.const.AF_INET6 == family)
-						uspots[uspot].clients[mac] = { ip6addr: dst };
-					else
-						uspots[uspot].clients[mac] = { ip4addr: dst };
+					uspots[uspot].clients[mac] = { ip4addr: dst };
 				}
 				break;
 			case rtnl.const.NUD_STALE:

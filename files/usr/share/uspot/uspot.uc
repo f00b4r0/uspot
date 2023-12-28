@@ -463,6 +463,8 @@ function client_remove(uspot, mac, reason) {
 	};
 
 	uconn.call('spotfilter', 'client_remove', payload);
+	if (uconn.error())
+		return;	// if we couldn't remove from spotfilter, try again at the next round - keep uspot/spotfilter in sync
 
 	if (+tip_mode) {
 		let client = uspots[uspot].clients[mac];

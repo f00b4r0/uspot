@@ -17,7 +17,7 @@ define Package/uspot
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +ratelimit +spotfilter \
-	   +ucode +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop
+	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop
 endef
 
 define Package/uspot/description
@@ -55,7 +55,7 @@ define Package/uspotfilter
   TITLE:=uspot implementation of spotfilter
   PROVIDES:=spotfilter
   CONFLICTS:=spotfilter
-  DEPENDS:=+ucode +ucode-mod-uloop +ucode-mod-rtnl +nftables-json +conntrack
+  DEPENDS:=+ucode +ucode-mod-log +ucode-mod-uloop +ucode-mod-rtnl +nftables-json +conntrack
   PKGARCH:=all
 endef
 

@@ -1,7 +1,7 @@
 #!/usr/bin/ucode
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2022-2023 John Crispin <john@phrozen.org>
-// SPDX-FileCopyrightText: 2023 Thibaut Varène <hacks@slashdirt.org>
+// SPDX-FileCopyrightText: 2023-2024 Thibaut Varène <hacks@slashdirt.org>
 
 'use strict';
 
@@ -13,7 +13,12 @@ let ubus = require('ubus');
 let uconn = ubus.connect();
 let uci = require('uci').cursor();
 let lib = require('uspotlib');
+import { ulog_open, ulog, ULOG_SYSLOG, LOG_DAEMON, LOG_DEBUG, ERR, WARN, INFO } from 'log';
+
 let uspots = {};
+
+// setup logging
+ulog_open(ULOG_SYSLOG, LOG_DAEMON, "uspot");
 
 let tip_mode = uci.get('uspot', 'def_captive', 'tip_mode');
 
@@ -51,21 +56,14 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 
 if (!uciload) {
 	let log = 'failed to load config';
-	system('logger -t uspot ' + log);
+	ERR(log);
 	warn(log + '\n');
 	exit(1);
 }
 
-function syslog(uspot, mac, msg) {
-	let log = sprintf('%s %s %s', uspot, mac, msg);
-
-	system('logger -t uspot \'' + log + '\'');
-	warn(log + '\n');
-}
-
-function debug(uspot, mac, msg) {
+function debug(uspot, msg) {
 	if (+uspots[uspot].settings.debug)
-		syslog(uspot, mac, msg);
+		ulog(LOG_DEBUG, `${uspot} ${msg}`);
 }
 
 function format_mac(uspot, mac) {
@@ -227,7 +225,7 @@ function radius_terminate(uspot, mac, cause) {
 		'Acct-Status-Type': radat_stop,
 		'Acct-Terminate-Cause': cause,
 	};
-	debug(uspot, mac, 'acct terminate: ' + cause);
+	debug(uspot, mac + ' acct terminate: ' + cause);
 	radius_acct(uspot, mac, payload);
 }
 
@@ -241,7 +239,7 @@ function radius_start(uspot, mac) {
 	let payload = {
 		'Acct-Status-Type': radat_start,
 	};
-	debug(uspot, mac, 'acct start');
+	debug(uspot, mac + ' acct start');
 	radius_acct(uspot, mac, payload);
 }
 
@@ -256,7 +254,7 @@ function radius_interim(uspot, mac) {
 		'Acct-Status-Type': radat_interim,
 	};
 	radius_acct(uspot, mac, payload);
-	debug(uspot, mac, 'interim acct call');
+	debug(uspot, mac + ' interim acct call');
 }
 
 /**
@@ -360,7 +358,7 @@ function client_create(uspot, mac, payload)
 			data: client,
 		});
 
-	debug(uspot, mac, 'creating client');
+	debug(uspot, mac + ' creating client');
 }
 
 /**
@@ -414,7 +412,7 @@ function client_enable(uspot, mac) {
 
 	// abort if spotfilter does not reply (not running?)
 	if (!spotfilter) {
-		syslog(uspot, mac, 'no reply from spotfilter!');
+		ERR(`${uspot} ${mac} no reply from spotfilter!`);
 		return;
 	}
 
@@ -436,7 +434,7 @@ function client_enable(uspot, mac) {
 
 	if (!uconn.error()) {
 		uspots[uspot].clients[mac] = client;
-		syslog(uspot, mac, 'adding client');
+		INFO(`${uspot} ${mac} adding client`);
 
 		// start RADIUS accounting
 		if (accounting && radius?.request)
@@ -456,7 +454,7 @@ function client_enable(uspot, mac) {
  * @param {string} reason the removal reason (for logging purposes)
  */
 function client_remove(uspot, mac, reason) {
-	syslog(uspot, mac, reason);
+	INFO(`${uspot} ${mac} removing client: ${reason}`);
 	let payload = {
 		interface: uspot,
 		address: mac,
@@ -501,7 +499,7 @@ function radius_accton(uspot)
 	payload = radius_init(uspot, null, payload);
 	payload.acct = true;
 	radius_call(uspot, null, payload);
-	debug(uspot, null, 'acct-on call');
+	debug(uspot, 'acct-on call');
 }
 
 /**
@@ -518,7 +516,7 @@ function radius_acctoff(uspot)
 	payload = radius_init(uspot, null, payload);
 	payload.acct = true;
 	radius_call(uspot, null, payload);
-	debug(uspot, null, 'acct-off call');
+	debug(uspot, 'acct-off call');
 }
 
 /**
@@ -537,7 +535,7 @@ function accounting(uspot) {
 	let accounting = uspots[uspot].settings.accounting;
 
 	if (!list) {
-		syslog(uspot, null, 'no client list from spotfilter!');
+		WARN(`${uspot} no client list from spotfilter!`);
 		return;
 	}
 
@@ -994,7 +992,7 @@ function run_service() {
 				if (address) {
 					let client = uspots[uspot].clients[address];
 					das_coa_update_client(client, changes);
-					syslog(uspot, address, "CoA update");
+					INFO(`${uspot} ${address} CoA update`);
 				}
 
 				return { "found": address ? true : false };

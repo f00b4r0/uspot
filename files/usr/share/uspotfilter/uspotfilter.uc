@@ -1,6 +1,6 @@
 #!/usr/bin/ucode
 // SPDX-License-Identifier: GPL-2.0-only
-// SPDX-FileCopyrightText: 2023 Thibaut Varène <hacks@slashdirt.org>
+// SPDX-FileCopyrightText: 2023-2024 Thibaut Varène <hacks@slashdirt.org>
 // uspotfilter - uspot interface to netfilter
 
 /*
@@ -20,9 +20,13 @@ let ubus = require('ubus');
 let uconn = ubus.connect();
 let uci = require('uci').cursor();
 let rtnl = require('rtnl');
+import { ulog_open, ulog, ULOG_SYSLOG, LOG_DAEMON, LOG_DEBUG, ERR } from 'log';
 
 let uspots = {};
 let devices = {};
+
+// setup logging
+ulog_open(ULOG_SYSLOG, LOG_DAEMON, "uspotfilter");
 
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	if (!d[".anonymous"]) {
@@ -44,21 +48,14 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 
 if (!uciload) {
 	let log = 'failed to load config';
-	system('logger -t uspotfilter ' + log);
+	ERR(log);
 	warn(log + '\n');
 	exit(1);
 }
 
-function syslog(uspot, mac, msg) {
-	let log = sprintf('%s %s %s', uspot, mac, msg);
-
-	system('logger -t uspotfilter \'' + log + '\'');
-	warn(log + '\n');
-}
-
-function debug(uspot, mac, msg) {
+function debug(uspot, msg) {
 	if (+uspots[uspot].settings.debug)
-		syslog(uspot, mac, msg);
+		ulog(LOG_DEBUG, `${uspot} ${msg}`);
 }
 
 // wrapper for scraping external tools JSON stdout
@@ -133,7 +130,7 @@ function client_allowed(uspot, mac)
  */
 function client_remove(uspot, mac)
 {
-	debug(uspot, mac, 'client_remove');
+	debug(uspot, mac + ' client_remove');
 
 	client_state(uspot, mac, 0);
 

@@ -187,10 +187,8 @@ function rtnl_neigh_cb(msg)
 				// Linux may aggressively delete neighs to make room even though they are still around
 				// allowed idle clients will eventually be purged by uspot - idle_since can only be cleared when neigh is (re)set
 				// WARNING: thus the ONLY case where a client may avoid deletion here is IFF it is allowed by uspot
-				if (+client?.state) {
-					if (!client.idle_since)
-						client.idle_since = time();
-				}
+				if (+client?.state)
+					client.idle_since ??= time();
 				else
 					lost_neigh();
 				break;
@@ -212,8 +210,8 @@ function rtnl_neigh_cb(msg)
 				}
 				break;
 			case rtnl.const.NUD_STALE:
-				if (client && !client.idle_since)
-					client.idle_since = time();
+				if (client)
+					client.idle_since ??= time();
 				break;
 			case rtnl.const.NUD_FAILED:
 				// lladdr is no longer available in these states

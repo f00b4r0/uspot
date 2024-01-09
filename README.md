@@ -37,6 +37,22 @@ uspot supports Captive Portal API (RFC8908), and supports some RADIUS DAE (RFC51
 
 In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot supports per-client bandwidth restriction.
 
+## License
+
+GPLv2-only - http://www.gnu.org/licenses/gpl-2.0.html
+
+- Copyright (C) 2022-2023 John Crispin
+- Copyright (C) 2021-2024 Thibaut VARÈNE
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version 2,
+as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See [LICENSE.md](LICENSE.md) for details.
+
 ## Configuration
 
 The available configuration options and their defaults are listed in the provided [uspot](files/etc/config/uspot) configuration file.
@@ -189,7 +205,7 @@ config ipset
 	list domain 'my.whitelist2.domain'
 ```
 
-This snippet will allow up to 1000 captive clients on interface 'captive' with a 2h lease time.
+This snippet will allow up to 1000 (modulo the captive network netmask) captive clients on interface 'captive' with a 2h lease time.
 The DNS name `captive.example.org` aliases the 'captive' interface IP for TLS support
 (public TLS certificates cannot be obtained for private IP addresses): a valid, CA-signed TLS certificate
 will have to be created and provided for this to work. The RFC requires the API to be accessed over TLS.
@@ -309,7 +325,13 @@ Optionally, depending on local configuration and/or RADIUS parameters, the follo
 
 uspot has been primarily tested with IPv4 captive clients.
 
+uspotfilter uses a RTNL listener to detect client state changes (disconnection in particular).
+There are limitations in the RTNL implementation that may cause, under specific circumstances,
+RTNL messages to be lost, see https://github.com/jow-/ucode/issues/184
+This could result in lingering sessions if e.g. said sessions do not have a set timeout.  
+
 ## TODO
 
 - UI internationalization (i18n)
 - traffic accounting
+- IPv6 support in uspotfilter

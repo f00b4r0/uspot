@@ -25,9 +25,11 @@ let tip_mode = uci.get('uspot', 'def_captive', 'tip_mode');
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	if (!d[".anonymous"]) {
 		let accounting = !!(d.acct_server && d.acct_secret);
+		let device = uci.get('network', d.interface, 'device');
 		uspots[d[".name"]] = {
 		settings: {
 			accounting,
+			device,
 			auth_mode: d.auth_mode,
 			auth_server: d.auth_server,
 			auth_secret: d.auth_secret,
@@ -299,6 +301,7 @@ function client_interim(uspot, mac, time) {
  */
 function client_ratelimit(uspot, mac) {
 	let client = uspots[uspot].clients[mac];
+	let device = uspots[uspot].settings.device;
 
 	if (!(client.radius?.reply))
 		return;
@@ -314,7 +317,7 @@ function client_ratelimit(uspot, mac) {
 
 	let rldata = {};
 	let args = {
-		device: client.device,
+		device: tip_mode ? client.device : device,
 		address: mac,
 	};
 	if (+maxdown) {

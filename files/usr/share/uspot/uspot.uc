@@ -408,22 +408,24 @@ function client_enable(uspot, mac) {
 	if (cui)
 		client.radius.request['Chargeable-User-Identity'] = cui;
 
-	let spotfilter = uconn.call('spotfilter', 'client_get', {
-		interface: uspot,
-		address: mac,
-	});
+	if (tip_mode) {
+		let spotfilter = uconn.call('spotfilter', 'client_get', {
+			interface: uspot,
+			address: mac,
+		});
 
-	// abort if spotfilter does not reply (not running?)
-	if (!spotfilter) {
-		ERR(`${uspot} ${mac} no reply from spotfilter!`);
-		return;
+		// abort if spotfilter does not reply (not running?)
+		if (!spotfilter) {
+			ERR(`${uspot} ${mac} no reply from spotfilter!`);
+			return;
+		}
+
+		client.device = spotfilter.device;
+		if (spotfilter.ip4addr)
+			client.ip4addr = spotfilter.ip4addr;
+		if (spotfilter.ip6addr)
+			client.ip6addr = spotfilter.ip6addr;
 	}
-
-	client.device = spotfilter.device;
-	if (spotfilter.ip4addr)
-		client.ip4addr = spotfilter.ip4addr;
-	if (spotfilter.ip6addr)
-		client.ip6addr = spotfilter.ip6addr;
 
 	// tell spotfilter this client is allowed
 	uconn.call('spotfilter', 'client_set', {

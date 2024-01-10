@@ -599,6 +599,9 @@ function start()
 			seen[server] = {};
 		seen[server][nasid] = 1;
 		radius_accton(uspot);
+
+		// clear ratelimit rules for our device
+		uconn.call('ratelimit', 'device_delete', { device: data.settings.device });
 	}
 }
 
@@ -607,6 +610,9 @@ function stop()
 	for (let uspot, data in uspots) {
 		if (data.sessionid)	// we have previously sent Accounting-On
 			radius_acctoff(uspot);
+
+		// clear ratelimit rules for our device
+		uconn.call('ratelimit', 'device_delete', { device: data.settings.device });
 	}
 }
 

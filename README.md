@@ -42,7 +42,7 @@ In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot sup
 GPLv2-only - http://www.gnu.org/licenses/gpl-2.0.html
 
 - Copyright (C) 2022-2023 John Crispin
-- Copyright (C) 2021-2024 Thibaut VARÈNE
+- Copyright (C) 2023-2024 Thibaut VARÈNE
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License version 2,
@@ -327,8 +327,10 @@ uspot has been primarily tested with IPv4 captive clients.
 
 uspotfilter uses a RTNL listener to detect client state changes (disconnection in particular).
 There are limitations in the RTNL implementation that may cause, under specific circumstances,
-RTNL messages to be lost, see https://github.com/jow-/ucode/issues/184
+RTNL messages to be lost (see https://github.com/jow-/ucode/issues/184).
 This could result in lingering sessions if e.g. said sessions do not have a set timeout.  
+These limitations have been mitigated in ucode (see https://github.com/jow-/ucode/pull/185),
+which means that the probability for such occurrences is expected to be low.
 
 ## TODO
 

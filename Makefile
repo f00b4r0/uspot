@@ -14,6 +14,7 @@ define Package/uspot
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
+  EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +ratelimit +spotfilter \
@@ -55,6 +56,7 @@ define Package/uspotfilter
   TITLE:=uspot implementation of spotfilter
   PROVIDES:=spotfilter
   CONFLICTS:=spotfilter
+  EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+ucode +ucode-mod-log +ucode-mod-uloop +ucode-mod-rtnl +nftables-json +conntrack
   PKGARCH:=all
 endef

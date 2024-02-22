@@ -86,16 +86,18 @@ return {
 	// give a client access to the internet
 	allow_client: function(ctx, redir_location) {
 		this.debug(ctx, 'allowing client');
-		if (redir_location)
-			include('templates/redir.ut', { redir_location });
-		else
-			include('templates/connected.ut', ctx);
-
-		// start accounting
 		ctx.ubus.call('uspot', 'client_enable', {
 			uspot: ctx.uspot,
 			address: ctx.mac,
 		});
+
+		if (ctx.ubus.error())
+			include('templates/error.ut', ctx);
+		else if (redir_location)
+			include('templates/redir.ut', { redir_location });
+		else
+			include('templates/connected.ut', ctx);
+
 	},
 
 	// put a client back into pre-auth state

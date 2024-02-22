@@ -372,6 +372,7 @@ function client_create(uspot, mac, payload)
  *
  * @param {string} uspot the target uspot
  * @param {string} mac the client MAC address
+ * @returns {boolean} true if success, false otherwise
  */
 function client_enable(uspot, mac) {
 	let defval = 0;
@@ -417,7 +418,7 @@ function client_enable(uspot, mac) {
 		// abort if spotfilter does not reply (not running?)
 		if (!spotfilter) {
 			ERR(`${uspot} ${mac} no reply from spotfilter!`);
-			return;
+			return false;
 		}
 
 		client.device = spotfilter.device;
@@ -447,7 +448,11 @@ function client_enable(uspot, mac) {
 
 		// apply ratelimiting rules, if any
 		client_ratelimit(uspot, mac);
+
+		return true;
 	}
+
+	return false;
 }
 
 /**
@@ -831,9 +836,9 @@ function run_service() {
 
 				// if client is already enabled, do nothing
 				if (!uspots[uspot].clients[address].state)
-					client_enable(uspot, address);
+					return client_enable(uspot, address) ? ubus.STATUS_OK : ubus.STATUS_UNKNOWN_ERROR;
 
-				return 0;
+				return ubus.STATUS_OK;
 			},
 			/*
 			 Enable a previously authenticated client to pass traffic.
@@ -863,7 +868,7 @@ function run_service() {
 					client_remove(uspot, address, 'client_remove event');
 				}
 
-				return 0;
+				return ubus.STATUS_OK;
 			},
 			/*
 			 Delete a client from the system.

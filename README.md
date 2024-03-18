@@ -37,6 +37,8 @@ uspot supports Captive Portal API (RFC8908), and supports some RADIUS DAE (RFC51
 
 In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot supports per-client bandwidth restriction.
 
+uspot does not support state persistence: restarting uspot will reset client state.
+
 ## License
 
 GPLv2-only - http://www.gnu.org/licenses/gpl-2.0.html
@@ -297,6 +299,11 @@ uci commit dhcp
 
 When a client connects to the network, if its MAC is authorized the script will automatically authenticate the client
 with the captive portal, without further action. 
+
+### radcli
+
+uspot does not install the dictionaries required by libradcli by default (to avoid conflicts).
+They are provided in [radcli/](files/etc/radcli/) for your convenience.
 
 ## UAM interface
 

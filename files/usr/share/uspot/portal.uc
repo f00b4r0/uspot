@@ -86,6 +86,7 @@ return {
 	// give a client access to the internet
 	allow_client: function(ctx, redir_location) {
 		this.debug(ctx, 'allowing client');
+		ctx.ubus.error();	// XXX REVISIT clear error
 		ctx.ubus.call('uspot', 'client_enable', {
 			uspot: ctx.uspot,
 			address: ctx.mac,

@@ -329,6 +329,7 @@ function client_ratelimit(uspot, mac) {
 		rldata.maxup = maxup/1000;	// in kbps
 	}
 
+	uconn.error();	// XXX REVISIT clear error
 	uconn.call('ratelimit', 'client_set', args);
 	if (!uconn.error())
 		client.data.ratelimit = rldata;
@@ -428,6 +429,7 @@ function client_enable(uspot, mac) {
 			client.ip6addr = spotfilter.ip6addr;
 	}
 
+	uconn.error();	// XXX REVISIT clear error
 	// tell spotfilter this client is allowed
 	uconn.call('spotfilter', 'client_set', {
 		interface: uspot,
@@ -470,6 +472,7 @@ function client_remove(uspot, mac, reason) {
 		address: mac,
 	};
 
+	uconn.error();	// XXX REVISIT clear error
 	uconn.call('spotfilter', 'client_remove', payload);
 	if (uconn.error())
 		return;	// if we couldn't remove from spotfilter, try again at the next round - keep uspot/spotfilter in sync

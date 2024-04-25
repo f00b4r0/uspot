@@ -10,6 +10,7 @@
 #	option auth_mode ''		# one of 'uam', 'radius', 'credentials', 'click-to-continue'
 #	option idle_timeout '600'	# client is kicked when idle for more than N seconds, defaults to 600, option used if not provided by radius
 #	option session_timeout '0'	# client is kicked if connected for more than N seconds, defaults to 0, option used if not provided by radius
+#	option disconnect_delay '0'	# if set, a disconnected client will only be actually kicked after disconnect_delay seconds
 #	option interface ''		# network interface (from config/network) on which captive clients will be managed
 #	option setname ''		# firewall ipset name for client management
 #	option debug '0'		# turn on debugging output in logs

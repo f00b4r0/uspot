@@ -47,6 +47,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			location_name: d.location_name,
 			idle_timeout: d.idle_timeout || 600,
 			session_timeout: d.session_timeout || 0,
+			disconnect_delay: d.disconnect_delay,
 			debug: d.debug,
 		},
 		clients: {},
@@ -515,6 +516,7 @@ function accounting(uspot) {
 	let list = uconn.call('uspotfilter', 'client_list', { interface: uspot });
 	let t = time();
 	let accounting = uspots[uspot].settings.accounting;
+	let disconnect_delay = uspots[uspot].settings.disconnect_delay;
 
 	if (!list) {
 		WARN(`${uspot} no client list from uspotfilter!`);
@@ -532,6 +534,12 @@ function accounting(uspot) {
 		if (!list[mac] || !list[mac].state) {
 			radius_terminate(uspot, mac, radtc_lostcarrier);
 			client_remove(uspot, mac, 'disconnect event');
+			continue;
+		}
+
+		if (+disconnect_delay && (+list[mac].discon_since && (t - list[mac].discon_since > +disconnect_delay))) {
+			radius_terminate(uspot, mac, radtc_lostcarrier);
+			client_remove(uspot, mac, 'delayed disconnect event');
 			continue;
 		}
 

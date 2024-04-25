@@ -37,6 +37,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			setname: d.setname,
 			device,
 			debug: d.debug,
+			disconnect_delay: d.disconnect_delay,
 		},
 		clients: {},
 		neighs: {},
@@ -171,8 +172,18 @@ function rtnl_neigh_cb(msg)
 	{
 		if (neigh) {
 			client = uspots[uspot].clients[neigh];
-			if (client && (dst == client.ip4addr))
-				client_remove(uspot, neigh);
+			if (!client)
+				return;
+
+			// if a disconnect delay is set, allow a grace period where client actual removal is handled by uspot
+			if (+uspots[uspot].settings.disconnect_delay) {
+				client.discon_since ??= time();
+				delete client.idle_since;
+			}
+			else {
+				if (dst == client.ip4addr)
+					client_remove(uspot, neigh);
+			}
 		}
 	}
 
@@ -203,6 +214,7 @@ function rtnl_neigh_cb(msg)
 				uspots[uspot].neighs[dst] = mac;
 				if (client) {
 					delete client.idle_since;
+					delete client.discon_since;
 					client.ip4addr = dst;
 				}
 				else {
@@ -306,8 +318,10 @@ function run_service() {
 				data,
 			};
 
-			if (state)
+			if (state) {
 				delete client.idle_since;	// clear up leftover idle time
+				delete client.discon_since;
+			}
 
 			uspots[uspot].clients[address] = client;
 

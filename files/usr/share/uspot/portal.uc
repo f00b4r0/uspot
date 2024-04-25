@@ -43,31 +43,6 @@ uci.foreach('uspot', 'uspot', (d) => {
 	}
 });
 
-function lookup_station(mac) {
-	let nl = require("nl80211");
-	let wifs = nl.request(nl.const.NL80211_CMD_GET_INTERFACE, nl.const.NLM_F_DUMP);
-	for (let wif in wifs) {
-		if (!(wif.ifname in devices))
-			continue;
-		let res = nl.request(nl.const.NL80211_CMD_GET_STATION, nl.const.NLM_F_DUMP, { dev: wif.ifname });
-		for (let sta in res) {
-			if (sta.mac != lc(mac))
-				continue;
-			return devices[wif.ifname]
-		}
-	}
-}
-
-function spotfilter_device(uspot, mac)
-{
-	let uconn = ubus.connect();
-	let spot = uconn.call('spotfilter', 'client_get', {
-		interface: uspot,
-		address: mac,
-	});
-	return (spot?.device);
-}
-
 function _(english) {
 	return english;
 }
@@ -191,7 +166,7 @@ return {
 				}
 			}
 
-			ctx.uspot = (+config?.def_captive?.tip_mode && lookup_station(ctx.mac)) || devices[dev];	// fallback to rtnl device
+			ctx.uspot = devices[dev];	// rtnl device
 		}
 
 		ctx.config = config[ctx.uspot];
@@ -224,11 +199,6 @@ return {
 		}
 		ctx.connected = !!length(cdata);	// cdata is empty for disconnected clients
 
-		if (+config?.def_captive?.tip_mode && !cdata.ssid) {
-			let device = spotfilter_device(ctx.uspot, ctx.mac);
-			let hapd = ctx.ubus.call('hostapd.' + device, 'get_status');
-			cdata.ssid = hapd?.ssid || 'unknown';
-		}
 		if (!cdata.sessionid)
 			cdata.sessionid = lib.generate_sessionid();
 

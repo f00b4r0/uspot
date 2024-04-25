@@ -20,8 +20,6 @@ let uspots = {};
 // setup logging
 ulog_open(ULOG_SYSLOG, LOG_DAEMON, "uspot");
 
-let tip_mode = uci.get('uspot', 'def_captive', 'tip_mode');
-
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	if (!d[".anonymous"]) {
 		let accounting = !!(d.acct_server && d.acct_secret);
@@ -317,7 +315,7 @@ function client_ratelimit(uspot, mac) {
 
 	let rldata = {};
 	let args = {
-		device: tip_mode ? client.device : device,
+		device,
 		address: mac,
 	};
 	if (+maxdown) {
@@ -410,25 +408,6 @@ function client_enable(uspot, mac) {
 	if (cui)
 		client.radius.request['Chargeable-User-Identity'] = cui;
 
-	if (tip_mode) {
-		let spotfilter = uconn.call('spotfilter', 'client_get', {
-			interface: uspot,
-			address: mac,
-		});
-
-		// abort if spotfilter does not reply (not running?)
-		if (!spotfilter) {
-			ERR(`${uspot} ${mac} no reply from spotfilter!`);
-			return false;
-		}
-
-		client.device = spotfilter.device;
-		if (spotfilter.ip4addr)
-			client.ip4addr = spotfilter.ip4addr;
-		if (spotfilter.ip6addr)
-			client.ip6addr = spotfilter.ip6addr;
-	}
-
 	uconn.error();	// XXX REVISIT clear error
 	// tell spotfilter this client is allowed
 	uconn.call('spotfilter', 'client_set', {
@@ -476,16 +455,6 @@ function client_remove(uspot, mac, reason) {
 	uconn.call('spotfilter', 'client_remove', payload);
 	if (uconn.error())
 		return;	// if we couldn't remove from spotfilter, try again at the next round - keep uspot/spotfilter in sync
-
-	if (+tip_mode) {
-		let client = uspots[uspot].clients[mac];
-
-		// purge existing connections (XXX keep this here as 'regular' spotfilter doesn't handle this yet)
-		if (client.ip4addr)
-			system('conntrack -D -s ' + client.ip4addr);
-		if (client.ip6addr)
-			system('conntrack -D -s ' + client.ip6addr);
-	}
 
 	// delete ratelimit rules if any
 	uconn.call('ratelimit', 'client_delete', { address: mac });
@@ -566,8 +535,7 @@ function accounting(uspot) {
 			continue;
 		}
 
-		if ((+list[mac].idle > +client.idle) ||
-		    (+list[mac].idle_since && (t - list[mac].idle_since > +client.idle))) {
+		if ((+list[mac].idle_since && (t - list[mac].idle_since > +client.idle))) {
 			radius_terminate(uspot, mac, radtc_idleto);
 			client_remove(uspot, mac, 'idle event');
 			continue;
@@ -578,7 +546,7 @@ function accounting(uspot) {
 			client_remove(uspot, mac, 'session timeout');
 			continue;
 		}
-		let maxtotal = +client.max_total;
+		let maxtotal = 0; // +client.max_total;	// XXX currently not implemented
 		if (maxtotal && (((list[mac].acct_data?.bytes_ul || 0) + (list[mac].acct_data?.bytes_dl || 0)) >= maxtotal)) {
 			radius_terminate(uspot, mac, radtc_sessionto);
 			client_remove(uspot, mac, 'max octets reached');

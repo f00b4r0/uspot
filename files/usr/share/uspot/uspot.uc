@@ -176,7 +176,7 @@ function radius_acct(uspot, mac, payload) {
 		return;
 
 	let client = uspots[uspot].clients[mac];
-	let state = uconn.call('spotfilter', 'client_get', {
+	let state = uconn.call('uspotfilter', 'client_get', {
 		interface: uspot,
 		address: mac
 	}) || client;	// fallback to last known state
@@ -259,7 +259,7 @@ function radius_interim(uspot, mac) {
 
 /**
  * Uspot internal client accounting.
- * This function keeps track of the last known spotfilter accounting data,
+ * This function keeps track of the last known uspotfilter accounting data,
  * and optionally sends interim RADIUS reports if configured
  *
  * @param {string} uspot the target uspot
@@ -269,8 +269,8 @@ function radius_interim(uspot, mac) {
 function client_interim(uspot, mac, time) {
 	let client = uspots[uspot].clients[mac];
 
-	// preserve a copy of last spotfilter stats for use in disconnect case
-	let state = uconn.call('spotfilter', 'client_get', {
+	// preserve a copy of last uspotfilter stats for use in disconnect case
+	let state = uconn.call('uspotfilter', 'client_get', {
 		interface: uspot,
 		address: mac
 	});
@@ -352,9 +352,9 @@ function client_create(uspot, mac, payload)
 
 	uspots[uspot].clients[mac] = client;
 
-	// if debug, save entire client payload to spotfilter
+	// if debug, save entire client payload to uspotfilter
 	if (uspots[uspot].settings.debug)
-		uconn.call('spotfilter', 'client_set', {
+		uconn.call('uspotfilter', 'client_set', {
 			interface: uspot,
 			address: mac,
 			data: client,
@@ -367,7 +367,7 @@ function client_create(uspot, mac, payload)
  * Enable an authenticated client to pass traffic.
  * This function authorizes a client, applying RADIUS-provided limits if any:
  * 'Acct-Interim-Interval', 'Session-Timeout', 'Idle-Timeout' and 'ChilliSpot-Max-Total-Octets'.
- * It updates spotfilter state for authorization, starts RADIUS accounting and ratelimit as needed.
+ * It updates uspotfilter state for authorization, starts RADIUS accounting and ratelimit as needed.
  *
  * @param {string} uspot the target uspot
  * @param {string} mac the client MAC address
@@ -409,8 +409,8 @@ function client_enable(uspot, mac) {
 		client.radius.request['Chargeable-User-Identity'] = cui;
 
 	uconn.error();	// XXX REVISIT clear error
-	// tell spotfilter this client is allowed
-	uconn.call('spotfilter', 'client_set', {
+	// tell uspotfilter this client is allowed
+	uconn.call('uspotfilter', 'client_set', {
 		interface: uspot,
 		address: mac,
 		state: 1,
@@ -452,9 +452,9 @@ function client_remove(uspot, mac, reason) {
 	};
 
 	uconn.error();	// XXX REVISIT clear error
-	uconn.call('spotfilter', 'client_remove', payload);
+	uconn.call('uspotfilter', 'client_remove', payload);
 	if (uconn.error())
-		return;	// if we couldn't remove from spotfilter, try again at the next round - keep uspot/spotfilter in sync
+		return;	// if we couldn't remove from uspotfilter, try again at the next round - keep uspot/uspotfilter in sync
 
 	// delete ratelimit rules if any
 	uconn.call('ratelimit', 'client_delete', { address: mac });
@@ -505,19 +505,19 @@ function radius_acctoff(uspot)
  * Perform accounting housekeeping for a uspot.
  * This function goes throught the list of known clients and performs:
  * - cleanup authenticated but not enabled clients after 60s grace period;
- * - cleanup when a client is no longer known to spotfilter;
+ * - cleanup when a client is no longer known to uspotfilter;
  * - client termination on idle timeout, session timeout or data budget expiration.
  * - RADIUS interim accounting report
  *
  * @param {string} uspot the target uspot
  */
 function accounting(uspot) {
-	let list = uconn.call('spotfilter', 'client_list', { interface: uspot });
+	let list = uconn.call('uspotfilter', 'client_list', { interface: uspot });
 	let t = time();
 	let accounting = uspots[uspot].settings.accounting;
 
 	if (!list) {
-		WARN(`${uspot} no client list from spotfilter!`);
+		WARN(`${uspot} no client list from uspotfilter!`);
 		return;
 	}
 
@@ -676,7 +676,7 @@ function run_service() {
 					return { 'access-accept': 0 };
 
 				let settings = uspots[uspot].settings;
-				address = uc(address);	// spotfilter uses ether_ntoa() which is uppercase
+				address = uc(address);	// uspotfilter uses ether_ntoa() which is uppercase
 
 				// if client is already created (==authenticated), return early
 				if (uspots[uspot].clients[address])
@@ -799,7 +799,7 @@ function run_service() {
 				if (!(uspot in uspots))
 					return ubus.STATUS_INVALID_ARGUMENT;
 
-				address = uc(address);	// spotfilter uses ether_ntoa() which is uppercase
+				address = uc(address);	// uspotfilter uses ether_ntoa() which is uppercase
 
 				// enabling clients can only be done for known ones (i.e. those which passed authentication)
 				if (!uspots[uspot].clients[address])

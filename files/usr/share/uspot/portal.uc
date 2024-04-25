@@ -147,7 +147,7 @@ return {
 		ctx.ubus = ubus.connect();
 
 		// try fast peer lookup first
-		let peer = ctx.ubus.call('spotfilter', 'peer_lookup', {
+		let peer = ctx.ubus.call('uspotfilter', 'peer_lookup', {
 			ip: env.REMOTE_ADDR,
 		});
 

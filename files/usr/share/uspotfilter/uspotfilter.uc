@@ -250,7 +250,7 @@ function stop()
  */
 
 function run_service() {
-	uconn.publish("spotfilter", {
+	uconn.publish("uspotfilter", {
 	client_get: {
 		call: function(req) {
 			let uspot = req.args.interface;

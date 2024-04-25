@@ -17,7 +17,7 @@ define Package/uspot
   EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
-	   +ratelimit +spotfilter \
+	   +ratelimit +uspotfilter \
 	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop
 endef
 
@@ -53,16 +53,14 @@ endef
 define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=uspot implementation of spotfilter
-  PROVIDES:=spotfilter
-  CONFLICTS:=spotfilter
+  TITLE:=uspot firewall interface
   EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+ucode +ucode-mod-log +ucode-mod-uloop +ucode-mod-rtnl +nftables-json +conntrack
   PKGARCH:=all
 endef
 
 define Package/uspotfilter/description
-  This package provides the nftables firewall interface to spotfilter.
+  This package provides the nftables firewall interface to uspot.
   It is compatible with firewall4.
 endef
 
@@ -83,7 +81,7 @@ endef
 
 define Package/uspotfilter/install
 	$(INSTALL_DIR) $(1)/usr/share $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/etc/init.d/spotfilter $(1)/etc/init.d/spotfilter
+	$(INSTALL_BIN) ./files/etc/init.d/uspotfilter $(1)/etc/init.d/uspotfilter
 	$(CP) ./files/usr/share/uspotfilter $(1)/usr/share/
 endef
 

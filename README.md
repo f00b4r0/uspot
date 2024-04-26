@@ -300,6 +300,9 @@ uci commit dhcp
 When a client connects to the network, if its MAC is authorized the script will automatically authenticate the client
 with the captive portal, without further action. 
 
+**NB:** please note that this is a hackish work around to bypass the web interface but is not actually a "feature" in any respect.
+Uspot _is_ a captive _portal_ after all. Bugs arising from using this hack will most likely not be considered.
+
 ### radcli
 
 uspot does not install the dictionaries required by libradcli by default (to avoid conflicts).

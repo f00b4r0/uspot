@@ -537,7 +537,7 @@ function accounting(uspot) {
 			continue;
 		}
 
-		if (+disconnect_delay && (+list[mac].discon_since && (t - list[mac].discon_since > +disconnect_delay))) {
+		if (+disconnect_delay && (+list[mac].lost_since && (t - list[mac].lost_since > +disconnect_delay))) {
 			radius_terminate(uspot, mac, radtc_lostcarrier);
 			client_remove(uspot, mac, 'delayed disconnect event');
 			continue;

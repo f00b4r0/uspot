@@ -177,7 +177,7 @@ function rtnl_neigh_cb(msg)
 
 			// if a disconnect delay is set, allow a grace period where client actual removal is handled by uspot
 			if (+uspots[uspot].settings.disconnect_delay) {
-				client.discon_since ??= time();
+				client.lost_since ??= time();
 				delete client.idle_since;
 			}
 			else {
@@ -214,7 +214,7 @@ function rtnl_neigh_cb(msg)
 				uspots[uspot].neighs[dst] = mac;
 				if (client) {
 					delete client.idle_since;
-					delete client.discon_since;
+					delete client.lost_since;
 					client.ip4addr = dst;
 				}
 				else {
@@ -320,7 +320,7 @@ function run_service() {
 
 			if (state) {
 				delete client.idle_since;	// clear up leftover idle time
-				delete client.discon_since;
+				delete client.lost_since;
 			}
 
 			uspots[uspot].clients[address] = client;

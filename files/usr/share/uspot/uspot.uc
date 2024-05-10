@@ -684,7 +684,6 @@ function run_service() {
 					return { 'access-accept': 0 };
 
 				let settings = uspots[uspot].settings;
-				address = uc(address);	// uspotfilter uses ether_ntoa() which is uppercase
 
 				// if client is already created (==authenticated), return early
 				if (uspots[uspot].clients[address])
@@ -807,8 +806,6 @@ function run_service() {
 				if (!(uspot in uspots))
 					return ubus.STATUS_INVALID_ARGUMENT;
 
-				address = uc(address);	// uspotfilter uses ether_ntoa() which is uppercase
-
 				// enabling clients can only be done for known ones (i.e. those which passed authentication)
 				if (!uspots[uspot].clients[address])
 					return ubus.STATUS_NOT_FOUND;
@@ -839,8 +836,6 @@ function run_service() {
 					return ubus.STATUS_INVALID_ARGUMENT;
 				if (!(uspot in uspots))
 					return ubus.STATUS_INVALID_ARGUMENT;
-
-				address = uc(address);
 
 				if (uspots[uspot].clients[address]) {
 					radius_terminate(uspot, address, radtc_logout);
@@ -890,8 +885,6 @@ function run_service() {
 					return ubus.STATUS_INVALID_ARGUMENT;
 
 				if (address) {
-					address = uc(address);
-
 					if (!uspots[uspot].clients[address])
 						return {};
 

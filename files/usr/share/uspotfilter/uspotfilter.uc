@@ -162,7 +162,6 @@ function rtnl_neigh_cb(msg)
 	if (!uspot)	// not for us
 		return;
 
-	mac = uc(mac);
 	let client = uspots[uspot].clients[mac];
 	let neigh = uspots[uspot].neighs[dst];
 
@@ -273,8 +272,6 @@ function run_service() {
 			if (!(uspot in uspots))
 				return ubus.STATUS_INVALID_ARGUMENT;
 
-			address = uc(address);
-
 			let state = client_allowed(uspot, address);
 			let device = uspots[uspot].settings.device;
 
@@ -302,8 +299,6 @@ function run_service() {
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
 				return ubus.STATUS_INVALID_ARGUMENT;
-
-			address = uc(address);
 
 			if (flush) {
 				if (!uspots[uspot].clients[address])
@@ -360,8 +355,6 @@ function run_service() {
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
 				return ubus.STATUS_INVALID_ARGUMENT;
-
-			address = uc(address);
 
 			if (!uspots[uspot].clients[address])
 				return 0;

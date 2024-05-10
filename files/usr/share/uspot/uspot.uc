@@ -354,7 +354,7 @@ function client_create(uspot, mac, payload)
 	uspots[uspot].clients[mac] = client;
 
 	// if debug, save entire client payload to uspotfilter
-	if (uspots[uspot].settings.debug)
+	if (+uspots[uspot].settings.debug)
 		uconn.call('uspotfilter', 'client_set', {
 			interface: uspot,
 			address: mac,
@@ -415,9 +415,8 @@ function client_enable(uspot, mac) {
 		interface: uspot,
 		address: mac,
 		state: 1,
-		dns_state: 1,
 		accounting: accounting ? [ "dl", "ul"] : [],
-		data: uspots[uspot].settings.debug ? client : {},
+		data: +uspots[uspot].settings.debug ? client : { connect: client.connect, },
 	});
 
 	if (!uconn.error()) {

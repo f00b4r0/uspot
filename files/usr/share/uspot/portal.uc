@@ -29,18 +29,12 @@ uci.foreach('uspot', 'uspot', (d) => {
 	}
 
 	let spotname = d[".name"];
-	if (type(d.ifname) == "array") {
-		for (let n in d.ifname)
-			adddev(n, spotname);
+	let dev = uci.get('network', d.interface, 'device');
+	if (!dev) {
+		warn('uspot: interface not provided in section "' + spotname + '"\n');
+		return;
 	}
-	else {
-		let dev = d.ifname || uci.get('network', d.interface, 'device');	// fallback to interface if ifname not provided
-		if (!dev) {
-			warn('uspot: neither interface nor ifname provided in section "' + spotname + '"\n');
-			return;
-		}
-		adddev(dev, spotname);
-	}
+	adddev(dev, spotname);
 });
 
 function _(english) {

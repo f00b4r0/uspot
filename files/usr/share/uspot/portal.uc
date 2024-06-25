@@ -93,8 +93,6 @@ return {
 			sessionid: ctx.sessionid,
 			reqdata: { ... extra || {} },
 		};
-		if (ctx.ssid)
-			payload.ssid = ctx.ssid;
 		if (username)
 			payload.username = username;
 		if (password)
@@ -118,8 +116,6 @@ return {
 			'&called=' + ctx.config.nasmac +
 			'&nasid=' + ctx.config.nasid +
 			'&sessionid=' + ctx.sessionid;
-		if (ctx.ssid)
-			uam_url += '&ssid=' + ctx.ssid;
 		if (ctx.seconds_remaining)
 			uam_url += '&timeleft=' + ctx.seconds_remaining;
 		if (ctx.config.uam_sslurl)
@@ -196,7 +192,6 @@ return {
 		if (!cdata.sessionid)
 			cdata.sessionid = lib.generate_sessionid();
 
-		ctx.ssid = cdata.ssid;
 		ctx.sessionid = cdata.sessionid;
 		ctx.seconds_remaining = cdata.seconds_remaining;
 

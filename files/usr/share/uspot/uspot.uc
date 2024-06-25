@@ -670,7 +670,6 @@ function run_service() {
 				let username = req.args.username;
 				let password = req.args.password;
 				let challenge = req.args.challenge;
-				let ssid = req.args.ssid;
 				let sessionid = req.args.sessionid || lib.generate_sessionid();
 				let reqdata = req.args.reqdata;
 
@@ -696,8 +695,6 @@ function run_service() {
 						client_ip,	// not used, could be useful
 					},
 				};
-				if (ssid)
-					payload.data.ssid = ssid;
 
 				// click-to-continue: always accept - portal is responsible for checking conditions are met
 				if (settings.auth_mode == 'click-to-continue') {
@@ -736,7 +733,7 @@ function run_service() {
 				let request = {
 					'User-Name': username,
 					'Calling-Station-Id': fmac,
-					'Called-Station-Id': settings.nas_mac + (ssid ? ':' + ssid : ''),
+					'Called-Station-Id': settings.nas_mac,
 					'Acct-Session-Id': sessionid,
 					'Framed-IP-Address': client_ip,
 					... reqdata || {},
@@ -773,7 +770,6 @@ function run_service() {
 			 @param username: OPTIONAL: client username
 			 @param password: OPTIONAL: client password or CHAP password
 			 @param challenge: OPTIONAL: client CHAP challenge
-			 @param ssid: OPTIONAL: client SSID
 			 @param sessionid: OPTIONAL: accounting session ID
 			 @param reqdata: OPTIONAL: additional RADIUS request data - to be passed verbatim to radius-client
 			 @param return {object} "{"access-accept":N}" where N==1 if auth succeeded, 2 if already auth'd, 0 otherwise
@@ -790,7 +786,6 @@ function run_service() {
 				username:"",
 				password:"",
 				challenge:"",
-				ssid:"",
 				sessionid:"",
 				reqdata:{},
 			}

@@ -26,6 +26,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 		let accounting = !!(d.acct_server && d.acct_secret);
 		let device = uci.get('network', d.interface, 'device');
 		uspots[d[".name"]] = {
+		state: 1,	// active by default
 		settings: {
 			accounting,
 			device,
@@ -568,6 +569,9 @@ function radius_acctoff(uspot)
  * @param {string} uspot the target uspot
  */
 function accounting(uspot) {
+	if (!+uspots[uspot].state)
+		return;
+
 	let list = uconn.call('uspotfilter', 'client_list', { interface: uspot });
 	let t = time();
 	let accounting = uspots[uspot].settings.accounting;
@@ -775,6 +779,9 @@ function run_service() {
 					return { 'access-accept': 0 };
 
 				if (!(uspot in uspots))
+					return { 'access-accept': 0 };
+
+				if (!+uspots[uspot].state)
 					return { 'access-accept': 0 };
 
 				let settings = uspots[uspot].settings;
@@ -1094,6 +1101,78 @@ function run_service() {
 			args: {
 				uspot:"",
 				request:{},
+			}
+		},
+		state_get: {
+			call: function(req) {
+				let uspot = req.args.uspot;
+
+				if (uspot && !(uspot in uspots))
+					return ubus.STATUS_INVALID_ARGUMENT;
+
+				let payload = {};
+
+				if (uspot)
+					payload[uspot] = uspots[uspot].state;
+				else {
+					for (uspot in uspots)
+						payload[uspot] = uspots[uspot].state;
+				}
+
+				return payload;
+			},
+			/*
+			 Get all / a given uspot state.
+			 @param uspot: OPTIONAL: target uspot (if not provided, all uspots are effected)
+			 */
+			args: {
+				uspot:"",
+			}
+		},
+		state_set: {
+			call: function(req) {
+				function uspot_enable(uspot) {
+					uspots[uspot].state = 1;
+				}
+				function uspot_disable(uspot) {
+					uspots[uspot].state = 0;
+					for (let mac, client in uspots[uspot].clients) {
+						radius_terminate(uspot, mac, radtc_adminreset);
+						client_remove(uspot, mac, 'uspot disabled');
+					}
+				}
+				function uspot_state_update(uspot, state) {
+					if (uspots[uspot].state != state) {
+						if (state)
+							uspot_enable(uspot);
+						else
+							uspot_disable(uspot);
+					}
+				}
+
+				let uspot = req.args.uspot;
+				let state = !!req.args.state;
+
+				if (req.args.state == null || (uspot && !(uspot in uspots)))
+					return ubus.STATUS_INVALID_ARGUMENT;
+
+				if (uspot)
+					uspot_state_update(uspot, state);
+				else {
+					for (uspot in uspots)
+						uspot_state_update(uspot, state);
+				}
+
+				return ubus.STATUS_OK;
+			},
+			/*
+			 Change all / a given uspot state.
+			 @param uspot: OPTIONAL: target uspot (if not provided, all uspots are effected)
+			 @param state: REQUIRED: uspot state (false: inactive, true: active)
+			 */
+			args: {
+				uspot:"",
+				state:true,
 			}
 		},
 	});

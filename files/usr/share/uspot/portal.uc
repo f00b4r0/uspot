@@ -175,8 +175,26 @@ return {
 
 		ctx.format_mac = lib.format_mac(ctx.config.mac_format, ctx.mac);
 
+		// check if uspot is enabled
+		let cdata = ctx.ubus.call('uspot', 'state_get', {
+			uspot: ctx.uspot,
+		});
+
+		// stop if backend doesn't reply
+		if (!cdata) {
+			this.syslog(ctx, 'uspot error');
+			include('templates/error.ut', ctx);
+			return null;
+		}
+		// if not available, end processing with message
+		if (!cdata?.[ctx.uspot]) {
+			include('templates/unavailable.ut', ctx);
+			return null;
+		}
+
+
 		// check if a client is already connected
-		let cdata = ctx.ubus.call('uspot', 'client_get', {
+		cdata = ctx.ubus.call('uspot', 'client_get', {
 			uspot: ctx.uspot,
 			address: ctx.mac,
 		});

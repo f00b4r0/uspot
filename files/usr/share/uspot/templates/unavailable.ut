@@ -1,0 +1,11 @@
+Status: 200 OK
+Content-Type: text/html; charset=UTF-8
+
+
+{{ include(header) }}
+
+<h1> {{ _('Service unavailable') }} </h1>
+<p> {{ _('The service is currently unavailable. Please try again later.') }} </p>
+
+{{ include(footer) }}
+

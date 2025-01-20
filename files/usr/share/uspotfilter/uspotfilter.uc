@@ -175,7 +175,7 @@ function rtnl_neigh_cb(msg)
 				return;
 
 			// if a disconnect delay is set, allow a grace period where client actual removal is handled by uspot
-			if (+uspots[uspot].settings.disconnect_delay) {
+			if (+uspots[uspot].settings.disconnect_delay && +client?.state) {
 				client.lost_since ??= time();
 				delete client.idle_since;
 			}

@@ -270,7 +270,7 @@ function run_service() {
 			if (!uspot || !address)
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
-				return ubus.STATUS_INVALID_ARGUMENT;
+				return ubus.STATUS_NOT_FOUND;
 
 			let state = client_allowed(uspot, address);
 			let device = uspots[uspot].settings.device;
@@ -298,7 +298,7 @@ function run_service() {
 			if (!uspot || !address)
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
-				return ubus.STATUS_INVALID_ARGUMENT;
+				return ubus.STATUS_NOT_FOUND;
 
 			if (flush) {
 				if (!uspots[uspot].clients[address])
@@ -354,7 +354,7 @@ function run_service() {
 			if (!uspot || !address)
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
-				return ubus.STATUS_INVALID_ARGUMENT;
+				return ubus.STATUS_NOT_FOUND;
 
 			if (!uspots[uspot].clients[address])
 				return 0;
@@ -380,7 +380,7 @@ function run_service() {
 			if (!uspot)
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
-				return ubus.STATUS_INVALID_ARGUMENT;
+				return ubus.STATUS_NOT_FOUND;
 
 			let clients = uspots[uspot].clients;
 

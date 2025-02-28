@@ -35,7 +35,8 @@ In `uam` mode, MAC-based authentication bypass is supported.
 uspot supports Captive Portal API (RFC8908), and supports some RADIUS DAE (RFC5176) Disconnect and CoA operations
 (see comments in [radius-das.c](src/radius-das.c) for details on which attributes are supported).
 
-In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot supports per-client bandwidth restriction.
+In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot supports per-client bandwidth restriction
+(either via static configuration or through `WISPr-Bandwidth-Max-{Up,Down}`/`ChilliSpot-Bandwidth-Max-{Up,Down}` RADIUS attributes.
 
 uspot does not support state persistence: restarting uspot will reset client state.
 
@@ -154,7 +155,7 @@ config ipset
 	option name 'uspot'	# match with uspot option 'setname'
 	list match 'src_mac'
 
-# optional whitelist for e.g. remote UAM host and/or dynamic hosts via dnsmasq ipset functionality
+# optional whitelist for e.g. remote UAM host and/or dynamic hosts via dnsmasq ipset functionality (requires dnsmasq-full)
 config rule
 	option name 'Allow-Whitelist'
 	option src 'captive'

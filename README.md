@@ -28,9 +28,10 @@ uspot supports 4 authentication modes:
 
 In `radius` and `uam` modes:
 - RADIUS accounting is supported (only 'Session-Time' is reported for now)
-- text and CHAP passwords are supported
 
-In `uam` mode, MAC-based authentication bypass is supported.
+In `uam` mode:
+- PAP and CHAP passwords are supported
+- MAC-based authentication bypass is supported
 
 uspot supports Captive Portal API (RFC8908), and supports some RADIUS DAE (RFC5176) Disconnect and CoA operations
 (see comments in [radius-das.c](src/radius-das.c) for details on which attributes are supported).
@@ -45,7 +46,7 @@ uspot does not support state persistence: restarting uspot will reset client sta
 GPLv2-only - http://www.gnu.org/licenses/gpl-2.0.html
 
 - Copyright (C) 2022-2023 John Crispin
-- Copyright (C) 2023-2024 Thibaut VARÈNE
+- Copyright (C) 2023-2025 Thibaut VARÈNE
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License version 2,

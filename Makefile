@@ -6,8 +6,11 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
 
+PKG_BUILD_DEPENDS:=bpf-headers
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/bpf.mk
 
 define Package/uspot
   SUBMENU:=Captive Portals
@@ -18,7 +21,8 @@ define Package/uspot
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +ratelimit +uspotfilter \
-	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop
+	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop \
+	   +kmod-sched-core +kmod-sched-bpf $(BPF_DEPENDS)
 endef
 
 define Package/uspot/description
@@ -64,11 +68,17 @@ define Package/uspotfilter/description
   It is compatible with firewall4.
 endef
 
+define Build/Compile
+	$(call CompileBPF,$(PKG_BUILD_DIR)/uspot-bpf.c)
+	$(call Build/Compile/Default,)
+endef
+
 define Package/uspot/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share $(1)/usr/lib/ucode $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share $(1)/usr/lib/ucode $(1)/etc/init.d $(1)/etc/config $(1)/lib/bpf
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/radius-client $(1)/usr/bin/radius-client
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uspot-das $(1)/usr/bin/uspot-das
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libuam.so $(1)/usr/lib/ucode/uam.so
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/uspot-bpf.o $(1)/lib/bpf/uspot.o
 	$(INSTALL_CONF) ./files/etc/config/uspot $(1)/etc/config/uspot
 	$(INSTALL_BIN) ./files/etc/init.d/uspot $(1)/etc/init.d/uspot
 	$(CP) ./files/usr/bin $(1)/usr/

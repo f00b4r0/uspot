@@ -403,7 +403,9 @@ function run_service() {
 
 			for (let uspot, d in uspots) {
 				let neigh = d.neighs[ip];
-				if (neigh)
+				// the rtnl listener still seems to "skip" some events thus
+				// for the time being we restrict caching replies to known clients
+				if (neigh && uspots[uspot].clients[neigh])
 					return { mac: lc(neigh), uspot };
 			}
 

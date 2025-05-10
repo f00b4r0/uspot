@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { urlencode, ENCODE_FULL } from 'lucihttp';
+import { urlencode, urldecode, ENCODE_FULL, DECODE_KEEP_PLUS } from 'lucihttp';
 
 let ubus = require('ubus');
 let uci = require('uci').cursor();
@@ -217,7 +217,7 @@ return {
 					let var = split(chunk, '=');
 					if (length(var) != 2)
 						continue;
-					ctx.form_data[var[0]] = var[1];
+					ctx.form_data[var[0]] = urldecode(var[1], DECODE_KEEP_PLUS);
 				}
 			}
 		}

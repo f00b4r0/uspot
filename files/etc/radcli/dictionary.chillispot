@@ -9,6 +9,9 @@ ATTRIBUTE	ChilliSpot-Config			6	string	ChilliSpot
 ATTRIBUTE	ChilliSpot-Lang				7	string	ChilliSpot
 ATTRIBUTE	ChilliSpot-Version			8	string	ChilliSpot
 ATTRIBUTE	ChilliSpot-OriginalURL			9	string	ChilliSpot
+ATTRIBUTE	ChilliSpot-Max-Input-Gigawords		21	integer	ChilliSpot
+ATTRIBUTE	ChilliSpot-Max-Output-Gigawords		22	integer	ChilliSpot
+ATTRIBUTE	ChilliSpot-Max-Total-Gigawords		23	integer	ChilliSpot
 ATTRIBUTE	ChilliSpot-UAM-Allowed			100	string ChilliSpot
 ATTRIBUTE	ChilliSpot-MAC-Allowed			101	string ChilliSpot
 ATTRIBUTE	ChilliSpot-Interval			102	integer ChilliSpot

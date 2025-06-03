@@ -335,6 +335,46 @@ function client_ratelimit(uspot, mac) {
 }
 
 /**
+ * Apply RADIUS-provided client quota limits.
+ * This function parses a radius reply for the following attributes:
+ * 'ChilliSpot-Max-Total-Octets', 'ChilliSpot-Max-Total-Gigawords'
+ * 'ChilliSpot-Max-Input-Octets', 'ChilliSpot-Max-Input-Gigawords'
+ * 'ChilliSpot-Max-Output-Octets' and/or 'ChilliSpot-Max-Output-Gigawords'
+ * and enforces these limits if present.
+ *
+ * @param {string} uspot the target uspot
+ * @param {string} mac the client MAC address
+ */
+function client_quotalimit(uspot, mac) {
+	let client = uspots[uspot].clients[mac];
+	let device = uspots[uspot].settings.device;
+	let counters = +uspots[uspot].settings.counters;
+
+	if (!(counters && client.radius?.reply))
+		return;
+
+	let reply = client.radius.reply;
+
+	// check known attributes
+	let maxup = (+reply['ChilliSpot-Max-Input-Octets'] + (+reply['ChilliSpot-Max-Input-Gigawords'] << 32)) || 0;
+	let maxdown = (+reply['ChilliSpot-Max-Output-Octets'] + (+reply['ChilliSpot-Max-Output-Gigawords'] << 32)) || 0;
+	let maxtotal = (+reply['ChilliSpot-Max-Total-Octets'] + (+reply['ChilliSpot-Max-Total-Gigawords'] << 32)) || 0;
+
+	if (!(maxdown || maxup || maxtotal))
+		return;
+
+	let tx = (!!maxup || !!maxtotal), rx = (!!maxdown || !!maxtotal);
+	if (!length(uacct.client_get(device, mac)))	// don't overide enabled tx/rx counters if radius accounting is on
+		uacct.client_add(device, mac, tx, rx);
+
+	debug(uspot, mac + " enabling quota limits on " + (tx ? "tx " : "") + (rx ? "rx" : ""));
+
+	client.maxdown = maxdown;
+	client.maxup = maxup;
+	client.maxtotal = maxtotal;
+}
+
+/**
  * Add an authenticated but not yet validated client to the backend.
  * This function adds a client that passed authentication, but hasn't yet been enabled.
  * If the client isn't subsequently enabled, it will be purged after a 60s grace period.
@@ -392,8 +432,6 @@ function client_enable(uspot, mac) {
 	defval = settings.idle_timeout;
 	let idle = +(radius?.reply?.['Idle-Timeout'] || defval);
 
-	let max_total = +(radius?.reply?.['ChilliSpot-Max-Total-Octets'] || 0);
-
 	let cui = radius?.reply?.['Chargeable-User-Identity'];
 
 	let client = {
@@ -402,7 +440,6 @@ function client_enable(uspot, mac) {
 		interval,
 		session,
 		idle,
-		max_total,
 	};
 	if (radius?.request && accounting && interval)
 		client.next_interim = time() + interval;
@@ -415,7 +452,6 @@ function client_enable(uspot, mac) {
 		interface: uspot,
 		address: mac,
 		state: 1,
-		accounting: accounting ? [ "dl", "ul"] : [],
 		data: +uspots[uspot].settings.debug ? client : { connect: client.connect, },
 	});
 
@@ -429,6 +465,9 @@ function client_enable(uspot, mac) {
 
 		// apply ratelimiting rules, if any
 		client_ratelimit(uspot, mac);
+
+		// apply traffic limit/accouting rules, if any
+		client_quotalimit(uspot, mac);
 
 		return true;
 	}
@@ -521,6 +560,8 @@ function accounting(uspot) {
 	let t = time();
 	let accounting = uspots[uspot].settings.accounting;
 	let disconnect_delay = uspots[uspot].settings.disconnect_delay;
+	let device = uspots[uspot].settings.device;
+	let counters = +uspots[uspot].settings.counters;
 
 	if (!list) {
 		WARN(`${uspot} no client list from uspotfilter!`);
@@ -558,11 +599,27 @@ function accounting(uspot) {
 			client_remove(uspot, mac, 'session timeout');
 			continue;
 		}
-		let maxtotal = 0; // +client.max_total;	// XXX currently not implemented
-		if (maxtotal && (((list[mac].acct_data?.bytes_ul || 0) + (list[mac].acct_data?.bytes_dl || 0)) >= maxtotal)) {
-			radius_terminate(uspot, mac, radtc_sessionto);
-			client_remove(uspot, mac, 'max octets reached');
-			continue;
+
+		if (counters) {
+			let maxtotal = client.maxtotal, maxup = client.maxup, maxdown = client.maxdown;
+			if (maxtotal || maxup || maxdown) {
+				let acct_data = uacct.client_get(device, mac);
+				if (maxtotal && ((acct_data?.bytes_in || 0) + (acct_data?.bytes_out || 0)) >= maxtotal) {
+					radius_terminate(uspot, mac, radtc_sessionto);
+					client_remove(uspot, mac, 'max total octets reached');
+					continue;
+				}
+				if (maxup && (acct_data?.bytes_in || 0) >= maxup) {
+					radius_terminate(uspot, mac, radtc_sessionto);
+					client_remove(uspot, mac, 'max ul octets reached');
+					continue;
+				}
+				if (maxdown && (acct_data?.bytes_out || 0) >= maxdown) {
+					radius_terminate(uspot, mac, radtc_sessionto);
+					client_remove(uspot, mac, 'max dl octets reached');
+					continue;
+				}
+			}
 		}
 
 		if (accounting)

@@ -274,16 +274,6 @@ function radius_interim(uspot, mac) {
 function client_interim(uspot, mac, time) {
 	let client = uspots[uspot].clients[mac];
 
-	// preserve a copy of last uspotfilter stats for use in disconnect case
-	let state = uconn.call('uspotfilter', 'client_get', {
-		interface: uspot,
-		address: mac
-	});
-	if (!state)
-		return;
-
-	client.acct_data = state.acct_data;
-
 	if (!client.interval)
 		return;
 

@@ -144,12 +144,10 @@ function radius_init(uspot, mac, payload, auth) {
 /**
  * Execute "radius-client" with the provided RADIUS payload, return reply.
  *
- * @param {string} uspot the target uspot (used for debugging only)
- * @param {?string} mac the optional client MAC address
  * @param {object} payload the RADIUS payload
  * @returns {object} "radius-client" reply
  */
-function radius_call(uspot, mac, payload) {
+function radius_call(payload) {
 	return json_cmd('/usr/bin/radius-client /dev/stdin', payload);
 }
 
@@ -201,7 +199,7 @@ function radius_acct(uspot, mac, payload) {
 	if (state.data?.radius?.reply?.Class)
 		payload.Class = state.data.radius.reply.Class;
 
-	radius_call(uspot, mac, payload);
+	radius_call(payload);
 }
 
 // RADIUS Acct-Terminate-Cause attributes
@@ -481,7 +479,7 @@ function radius_accton(uspot)
 	};
 	payload = radius_init(uspot, null, payload);
 	payload.acct = true;
-	radius_call(uspot, null, payload);
+	radius_call(payload);
 	debug(uspot, 'acct-on call');
 }
 
@@ -498,7 +496,7 @@ function radius_acctoff(uspot)
 	};
 	payload = radius_init(uspot, null, payload);
 	payload.acct = true;
-	radius_call(uspot, null, payload);
+	radius_call(payload);
 	debug(uspot, 'acct-off call');
 }
 
@@ -754,7 +752,7 @@ function run_service() {
 
 				request = radius_init(uspot, address, request, true);
 
-				let radius = radius_call(uspot, address, request);
+				let radius = radius_call(request);
 
 				if (radius['access-accept']) {
 					delete request.server;	// don't publish RADIUS server secret

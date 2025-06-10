@@ -22,7 +22,7 @@ define Package/uspot
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +ratelimit +uspotfilter \
 	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop \
-	   +kmod-sched-core +kmod-sched-bpf $(BPF_DEPENDS)
+	   +ucode-mod-bpf +ucode-mod-struct +kmod-sched-core +kmod-sched-bpf $(BPF_DEPENDS)
 endef
 
 define Package/uspot/description

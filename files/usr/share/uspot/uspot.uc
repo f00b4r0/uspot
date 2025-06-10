@@ -450,6 +450,7 @@ function client_remove(uspot, mac, reason) {
 		interface: uspot,
 		address: mac,
 	};
+	let device = uspots[uspot].settings.device;
 
 	uconn.error();	// XXX REVISIT clear error
 	uconn.call('uspotfilter', 'client_remove', payload);
@@ -457,7 +458,7 @@ function client_remove(uspot, mac, reason) {
 		return;	// if we couldn't remove from uspotfilter, try again at the next round - keep uspot/uspotfilter in sync
 
 	// delete ratelimit rules if any
-	uconn.call('ratelimit', 'client_delete', { address: mac });
+	uconn.call('ratelimit', 'client_delete', { device, address: mac });
 
 	delete uspots[uspot].clients[mac];
 }

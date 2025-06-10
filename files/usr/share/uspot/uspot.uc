@@ -180,11 +180,7 @@ function radius_acct(uspot, mac, payload) {
 		return;
 
 	let client = uspots[uspot].clients[mac];
-	let state = uconn.call('uspotfilter', 'client_get', {
-		interface: uspot,
-		address: mac
-	}) || client;	// fallback to last known state
-	if (!state)
+	if (!client)
 		return;
 
 	payload = radius_init(uspot, mac, payload);
@@ -210,8 +206,8 @@ function radius_acct(uspot, mac, payload) {
 			}
 		}
 	}
-	if (state.data?.radius?.reply?.Class)
-		payload.Class = state.data.radius.reply.Class;
+	if (client.data?.radius?.reply?.Class)
+		payload.Class = client.data.radius.reply.Class;
 
 	radius_call(payload);
 }
@@ -274,12 +270,11 @@ function radius_interim(uspot, mac) {
 
 /**
  * Uspot internal client accounting.
- * This function keeps track of the last known uspotfilter accounting data,
- * and optionally sends interim RADIUS reports if configured
+ * This function optionally sends interim RADIUS reports if configured
  *
  * @param {string} uspot the target uspot
  * @param {string} mac the client MAC address
- * @param {?number} time the UNIX time of the report (only for RADIUS requests)
+ * @param {number} time the UNIX time of the report
  */
 function client_interim(uspot, mac, time) {
 	let client = uspots[uspot].clients[mac];

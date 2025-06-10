@@ -120,6 +120,7 @@ function radius_init(uspot, mac, payload, auth) {
 			payload.auth_proxy = settings.auth_proxy;
 	}
 	else {
+		payload.acct = true;
 		payload.acct_server = sprintf('%s:%s:%s', settings.acct_server, settings.acct_port, settings.acct_secret);
 		if (settings.acct_proxy)
 			payload.acct_proxy = settings.acct_proxy;
@@ -183,7 +184,6 @@ function radius_acct(uspot, mac, payload) {
 		return;
 
 	payload = radius_init(uspot, mac, payload);
-	payload.acct = true;
 
 	if (payload.acct_type != radat_start) {
 		payload['Acct-Session-Time'] = time() - client.connect;
@@ -478,7 +478,6 @@ function radius_accton(uspot)
 		'Acct-Session-Id': sessionid,
 	};
 	payload = radius_init(uspot, null, payload);
-	payload.acct = true;
 	radius_call(payload);
 	debug(uspot, 'acct-on call');
 }
@@ -495,7 +494,6 @@ function radius_acctoff(uspot)
 		'Acct-Session-Id': uspots[uspot].sessionid,
 	};
 	payload = radius_init(uspot, null, payload);
-	payload.acct = true;
 	radius_call(payload);
 	debug(uspot, 'acct-off call');
 }

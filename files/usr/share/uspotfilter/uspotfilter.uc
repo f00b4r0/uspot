@@ -254,7 +254,7 @@ function stop()
 }
 
 /*
- "client_set":{"interface":"String","address":"String","id":"String","state":"Integer","dns_state":"Integer","accounting":"Array","data":"Table","flush":"Boolean"}
+ "client_set":{"interface":"String","address":"String","state":"Integer","data":"Table"}
  "client_remove":{"interface":"String","address":"String"}
  "client_get":{"interface":"String","address":"String"}
  "client_list":{"interface":"String"}
@@ -293,19 +293,11 @@ function run_service() {
 			let address = req.args.address;
 			let state = req.args.state || 0;
 			let data = req.args.data;
-			let flush = !!req.args.flush;
 
 			if (!uspot || !address)
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
 				return ubus.STATUS_INVALID_ARGUMENT;
-
-			if (flush) {
-				if (!uspots[uspot].clients[address])
-					return 0;
-				client_remove(uspot, address);
-				return 0;
-			}
 
 			let client = {
 				... uspots[uspot].clients[address] || {},
@@ -328,22 +320,14 @@ function run_service() {
 		 Set client state in a given uspot.
 		 @param interface: REQUIRED: target uspot
 		 @param address: REQUIRED: target client MAC address
-		 @param id: IGNORED
 		 @param state: 1 to allow client, 0 to disallow
-		 @param dns_state: IGNORED
-		 @param accounting: IGNORED
 		 @param data: OPTIONAL client opaque data, stored with client state
-		 @param flush: OPTIONAL true to disallow client and delete associated data
 		 */
 		args: {
 			interface:"",
 			address:"",
-			id:"",
 			state:0,
-			dns_state:0,
-			accounting:[],
 			data:{},
-			flush:false,
 		}
 	},
 	client_remove: {

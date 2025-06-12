@@ -667,6 +667,9 @@ function start()
 			uacct.load(device);
 		}
 
+		// clear ratelimit rules for our device
+		uconn.call('ratelimit', 'device_delete', { device: data.settings.device });
+
 		if (!server || !nasid)
 			continue;
 		if ((server in seen) && (nasid in seen[server]))
@@ -675,9 +678,6 @@ function start()
 			seen[server] = {};
 		seen[server][nasid] = 1;
 		radius_accton(uspot);
-
-		// clear ratelimit rules for our device
-		uconn.call('ratelimit', 'device_delete', { device: data.settings.device });
 	}
 }
 

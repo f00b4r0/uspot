@@ -20,8 +20,18 @@ global.handle_request = function(env) {
 		};
 		if (ctx.config.cpa_venue_url)
 			api['venue-info-url'] = ctx.config.cpa_venue_url;
-		if (ctx.seconds_remaining)
-			api['seconds-remaining'] = ctx.seconds_remaining;
+
+		if (!api.captive) {
+			/*
+			 seconds-remaining	number
+			 An integer that indicates the number of seconds remaining, after which the client will be placed
+			 into a captive state. The API server SHOULD include this value if the client is not captive
+			 (i.e., captive=false) and the client session is time-limited and SHOULD omit this value
+			 for captive clients (i.e., captive=true) or when the session is not time-limited.
+			 */
+			if (ctx.seconds_remaining)
+				api['seconds-remaining'] = ctx.seconds_remaining;
+		}
 
 		include('templates/api.ut', { api } );
 	}

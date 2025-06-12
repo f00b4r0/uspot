@@ -17,7 +17,6 @@ let bpf = require("bpf");
 import { pack, unpack } from 'struct';
 
 const prio = 0x200;
-const fsbase="/sys/fs/bpf/uspot";
 
 function client_key(mac)
 {
@@ -29,7 +28,6 @@ let ctx = {};
 
 function init(devname)
 {
-	/*	XXX doesn't work, progs fail .tc_attach() (and .pin() as well) even though bpf_mod, map and prog are valid
 	let bpf_mod = bpf.open_module("/lib/bpf/uspot.o", {
 		"program-type": {
 			uspotbpf_acct_i: bpf.BPF_PROG_TYPE_SCHED_CLS,
@@ -46,30 +44,16 @@ function init(devname)
 		egress: bpf_mod.get_program("uspotbpf_acct_o"),
 	};
 	assert(prog.ingress && prog.egress, `prog open failed: ${bpf.error()}`);
-	*/
 
-	// XXX REVISIT temporary until the above works
-	let ret = system(["bpftool","prog","loadall","/lib/bpf/uspot.o",`${fsbase}_${devname}`,"pinmaps",`${fsbase}_m_${devname}`]);
-	assert(0 == ret, "bpftool failed to load uspot eBPF module");
-
-	let map = bpf.open_map(`${fsbase}_m_${devname}/m_clients`);
-	assert(map, `map open failed: ${bpf.error()}`);
-
-	let prog = {
-		ingress: bpf.open_program(`${fsbase}_${devname}/uspotbpf_acct_i`),
-		egress: bpf.open_program(`${fsbase}_${devname}/uspotbpf_acct_o`),
-	};
-	assert(prog.ingress && prog.egress, `prog open failed: ${bpf.error()}`);
-
-	ctx[devname] = { prog, map, };
+	ctx[devname] = { bpf_mod, prog, map, };
+	/* we need to carry a reference to bpf_mod throughout execution to workaround a bug in ucode-mod-bpf:
+	 <nbd> when the reference to the bpf module is dropped, it calls bpf_object__close internally
+	 <nbd> so all program references also become invalid
+	 Fixed in openwrt#e4c3c236b8f15e05b46d23d1771262e75d5b8f81 */
 }
 
 function exit(devname)
 {
-	// XXX REVISIT uneeded if native mod-bpf works
-	system(["rm","-rf",`${fsbase}_${devname}`]);
-	system(["rm","-rf",`${fsbase}_m_${devname}`]);
-	system(["tc","qdisc","del","dev",devname,"clsact"]);
 	delete ctx[devname];
 }
 

@@ -39,6 +39,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			acct_port: d.acct_port || 1813,
 			acct_proxy: d.acct_proxy,
 			acct_interval: d.acct_interval,
+			swapio: d.swapio,
 			nas_id: d.nasid,
 			nas_mac: d.nasmac,
 			mac_auth: d.mac_auth,
@@ -192,12 +193,21 @@ function radius_acct(uspot, mac, payload) {
 		payload['Acct-Session-Time'] = time() - client.connect;
 		let acct_data = +settings.counters ? uacct.client_get(settings.device, mac) : null;
 		if (length(acct_data)) {
-			payload['Acct-Output-Packets'] = acct_data.packets_out;
-			payload['Acct-Output-Octets'] = acct_data.bytes_out & 0xffffffff;
-			payload['Acct-Output-Gigawords'] = acct_data.bytes_out >> 32;
-			payload['Acct-Input-Packets'] = acct_data.packets_in;
-			payload['Acct-Input-Octets'] = acct_data.bytes_in & 0xffffffff;
-			payload['Acct-Input-Gigawords'] = acct_data.bytes_in >> 32;
+			if (+settings.swapio) {
+				payload['Acct-Output-Packets'] = acct_data.packets_in;
+				payload['Acct-Output-Octets'] = acct_data.bytes_in & 0xffffffff;
+				payload['Acct-Output-Gigawords'] = acct_data.bytes_in >> 32;
+				payload['Acct-Input-Packets'] = acct_data.packets_out;
+				payload['Acct-Input-Octets'] = acct_data.bytes_out & 0xffffffff;
+				payload['Acct-Input-Gigawords'] = acct_data.bytes_out >> 32;
+			} else {
+				payload['Acct-Output-Packets'] = acct_data.packets_out;
+				payload['Acct-Output-Octets'] = acct_data.bytes_out & 0xffffffff;
+				payload['Acct-Output-Gigawords'] = acct_data.bytes_out >> 32;
+				payload['Acct-Input-Packets'] = acct_data.packets_in;
+				payload['Acct-Input-Octets'] = acct_data.bytes_in & 0xffffffff;
+				payload['Acct-Input-Gigawords'] = acct_data.bytes_in >> 32;
+			}
 		}
 	}
 	if (state.data?.radius?.reply?.Class)
@@ -349,6 +359,7 @@ function client_quotalimit(uspot, mac) {
 	let client = uspots[uspot].clients[mac];
 	let device = uspots[uspot].settings.device;
 	let counters = +uspots[uspot].settings.counters;
+	let swapio = +uspots[uspot].settings.swapio;
 
 	if (!(counters && client.radius?.reply))
 		return;
@@ -362,6 +373,12 @@ function client_quotalimit(uspot, mac) {
 
 	if (!(maxdown || maxup || maxtotal))
 		return;
+
+	if (swapio) {
+		let temp = maxdown;
+		maxdown = maxup;
+		maxup = temp;
+	}
 
 	let tx = (!!maxup || !!maxtotal), rx = (!!maxdown || !!maxtotal);
 	if (!length(uacct.client_get(device, mac)))	// don't overide enabled tx/rx counters if radius accounting is on

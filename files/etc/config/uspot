@@ -30,6 +30,7 @@
 #	option acct_secret ''		# REQUIRED if acct_server is set - radius accounting server password
 #	option acct_proxy ''		# OPTIONAL - radius accounting server proxy
 #	option acct_interval ''		# OPTIONAL - radius accounting interim interval override
+#	option swapio ''		# OPTIONAL - swap the meaning of RADIUS 'Input' and 'Output' attributes
 #	option counters '0'		# OPTIONAL - enable traffic counters (for accounting and/or quota limits)
 #	option das_secret ''		# OPTIONAL - radius DAS secret, enables RADIUS DAS
 #	option das_port '3799'		# OPTIONAL - radius DAS listen port

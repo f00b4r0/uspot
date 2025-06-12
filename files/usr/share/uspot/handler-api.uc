@@ -31,6 +31,19 @@ global.handle_request = function(env) {
 			 */
 			if (ctx.seconds_remaining)
 				api['seconds-remaining'] = ctx.seconds_remaining;
+
+			/*
+			 bytes-remaining	number
+			 An integer that indicates the number of bytes remaining, after which the client will be placed
+			 into a captive state. The byte count represents the sum of the total number of IP packet (layer 3)
+			 bytes sent and received by the client, including IP headers. Captive Portal systems might not
+			 count traffic to whitelisted servers, such as the API server, but clients cannot rely on such
+			 behavior. The API server SHOULD include this value if the client is not captive (i.e., captive=false)
+			 and the client session is byte-limited and SHOULD omit this value for captive clients
+			 (i.e., captive=true) or when the session is not byte-limited.
+			 */
+			if (ctx.bytes_remaining)
+				api['bytes-remaining'] = ctx.bytes_remaining;
 		}
 
 		include('templates/api.ut', { api } );

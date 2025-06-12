@@ -965,6 +965,14 @@ function run_service() {
 						}
 					}
 
+					if (acct_data && (client.maxup || client.maxdown || client.maxtotal)) {
+						// compute a maximum for API bytes-remaining
+						// RFC doesn't distinguish up/down bytes so lets try to come up with something sensible
+						let maxtot = max(client.maxtotal, client.maxup + client.maxdown);
+						let cur = acct_data.bytes_in + acct_data.bytes_out;
+						data.bytes_remaining = maxtot - cur;
+					}
+
 					return data;
 				}
 

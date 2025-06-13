@@ -11,7 +11,7 @@
 #	option idle_timeout '600'	# OPTIONAL - client is kicked when idle for more than N seconds, defaults to 600, option used if not provided by radius
 #	option session_timeout '0'	# OPTIONAL - client is kicked if connected for more than N seconds, defaults to 0, option used if not provided by radius
 #	option disconnect_delay '0'	# OPTIONAL - if set, a disconnected client will only be actually kicked after disconnect_delay seconds
-#	option interface ''		# REQUIRED - network interface (from config/network) on which captive clients will be managed
+#	option interface ''		# REQUIRED - dedicated network interface (from config/network) on which captive clients will be managed
 #	option setname ''		# REQUIRED - firewall ipset name for client management
 #	option ratelimit_def ''		# OPTIONAL - name of 'ratelimit' defaults to apply to all connected clients. No limit if not set. Overrides RADIUS attributes.
 #	option debug '0'		# OPTIONAL - turn on debugging output in logs

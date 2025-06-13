@@ -14,7 +14,7 @@ The software consists of several parts:
 - A web frontend handling client user interface, local UAM and Captive Portal Detection duties
 - A client management backend handling client authentication and accounting
 - A firewall wrapper managing client network access and disconnection detection
-- A RADIUS Dynamic Authorization Server for RFC5176 support
+- A basic UDP-only RADIUS Dynamic Authorization Server for RFC5176 support
 - An eBPF module for high performance traffic accounting
 
 uspot requires OpenWrt 23.05 or newer.
@@ -30,18 +30,28 @@ uspot supports 4 authentication modes:
 In `radius` and `uam` modes:
 - RADIUS accounting is supported ('Session-Time' and Input/Output Packets/Octets/Gigawords - optionally swapping Input/Output)
 - RADIUS traffic limits are supported (via any combination of the `ChilliSpot-Max-{Input,Output,Total}-{Octets,Gigawords}` attributes)
+- RADIUS server connections over UDP or TCP are supported
+- Additionally, RadSec server connections (tls or dtls) are supported using PSK authentication, **provided that the installed `libradcli` is compiled with TLS support enabled**.
 
 In `uam` mode:
 - PAP and CHAP passwords are supported
 - MAC-based authentication bypass is supported
 
-uspot supports Captive Portal API (RFC8908), and supports some RADIUS DAE (RFC5176) Disconnect and CoA operations
-(see comments in [radius-das.c](src/radius-das.c) for details on which attributes are supported).
+uspot supports Captive Portal API (RFC8908) with support for:
+- `user-portal-url` (automatically set)
+- `venue-info-url` (configurable, option `cpa_venue_url`)
+- `can-extend-session` (configurable, option `cpa_can_extend`)
+- `seconds-remaining` (automatically set)
+- `bytes-remaining` (automatically set)
+
+uspot supports some basic RADIUS DAE (RFC5176) Disconnect and CoA operations over plaintext UDP,
+currently allowing client disconnection or update of `Session-Timeout`, `Idle-Timeout` and `Acct-Interim-Interval` attributes.
+(see comments in [radius-das.c](src/radius-das.c) for details on which client-matching attributes are supported).
 
 In conjunction with [ratelimit](https://github.com/f00b4r0/ratelimit), uspot supports per-client bandwidth restriction
 (either via static configuration or through `WISPr-Bandwidth-Max-{Up,Down}`/`ChilliSpot-Bandwidth-Max-{Up,Down}` RADIUS attributes.
 
-uspot does not support state persistence: restarting uspot will reset client state.
+uspot does not (and will not) support state persistence: restarting uspot will reset client state.
 
 ## License
 

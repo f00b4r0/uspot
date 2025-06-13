@@ -15,6 +15,7 @@ The software consists of several parts:
 - A client management backend handling client authentication and accounting
 - A firewall wrapper managing client network access and disconnection detection
 - A RADIUS Dynamic Authorization Server for RFC5176 support
+- An eBPF module for high performance traffic accounting
 
 uspot requires OpenWrt 23.05 or newer.
 
@@ -27,7 +28,8 @@ uspot supports 4 authentication modes:
 - `uam` enables RADIUS UAM authentication using a remote web portal
 
 In `radius` and `uam` modes:
-- RADIUS accounting is supported (only 'Session-Time' is reported for now)
+- RADIUS accounting is supported ('Session-Time' and Input/Output Packets/Octets/Gigawords - optionally swapping Input/Output)
+- RADIUS traffic limits are supported (via any combination of the `ChilliSpot-Max-{Input,Output,Total}-{Octets,Gigawords}` attributes)
 
 In `uam` mode:
 - PAP and CHAP passwords are supported
@@ -347,5 +349,4 @@ which means that the probability for such occurrences is expected to be low.
 ## TODO
 
 - UI internationalization (i18n)
-- traffic accounting
 - IPv6 support in uspotfilter

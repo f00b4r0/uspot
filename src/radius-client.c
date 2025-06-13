@@ -2,7 +2,7 @@
 /*
  * A simple JSON to radius client.
  * Copyright (C) 2022 John Crispin <john@phrozen.org>
- * Copyright (C) 2023 Thibaut Varène <hacks@slashdirt.org>
+ * Copyright (C) 2023,2025 Thibaut Varène <hacks@slashdirt.org>
  */
 
 #include <stdio.h>
@@ -25,6 +25,7 @@
 
 #include <libubox/blobmsg.h>
 #include <libubox/blobmsg_json.h>
+#include <libubox/ulog.h>
 
 enum {
 	RADIUS_acct,
@@ -205,9 +206,10 @@ result(rc_handle const *rh, int accept, VALUE_PAIR *pair)
 		VALUE_PAIR *vp;
 
 		for (vp = pair; vp != NULL; vp = vp->next) {
-			if (rc_avpair_tostr(rh, vp, name, sizeof(name), value,
-					    sizeof(value)) == -1)
+			if (rc_avpair_tostr(rh, vp, name, sizeof(name), value, sizeof(value)) == -1) {
+				ULOG_NOTE("Ignoring unknown attribute in reply: %llu\n", vp->attribute);
 				continue;	// add as many attributes as possible
+			}
 			blobmsg_add_string(&b, name, value);
 		}
 		blobmsg_close_table(&b, c);
@@ -247,12 +249,16 @@ radius(rc_handle *rh)
 	int len, i;
 
 	if (tb[RADIUS_authserver]) {
-		if (rc_add_config(rh, "authserver", blobmsg_get_string(tb[RADIUS_authserver]), "code", __LINE__))
+		if (rc_add_config(rh, "authserver", blobmsg_get_string(tb[RADIUS_authserver]), "code", __LINE__)) {
+			ULOG_ERR("Failed to set authserver!\n");
 			goto fail;
+		}
 	}
 	if (tb[RADIUS_acctserver]) {
-		if (rc_add_config(rh, "acctserver", blobmsg_get_string(tb[RADIUS_acctserver]), "code", __LINE__))
+		if (rc_add_config(rh, "acctserver", blobmsg_get_string(tb[RADIUS_acctserver]), "code", __LINE__)) {
+			ULOG_ERR("Failed to set acctserver!\n");
 			goto fail;
+		}
 	}
 
 	if (tb[RADIUS_acct] && blobmsg_get_bool(tb[RADIUS_acct]))
@@ -266,8 +272,10 @@ radius(rc_handle *rh)
 		goto fail;
 	if (rc_add_config(rh, "bindaddr", "*", "code", __LINE__))
 		goto fail;
-	if (rc_apply_config(rh) != 0)
+	if (rc_apply_config(rh) != 0) {
+		ULOG_ERR("Failed to apply radcli config!\n");
 		goto fail;
+	}
 
 	// process parsed blobmsg for radius request
 	for (i = 0; i < __RADIUS_MAX; i++) {
@@ -304,7 +312,7 @@ radius(rc_handle *rh)
 					pval = blobmsg_get_string(tb[i]);
 				break;
 			default:
-				fprintf(stderr, "policy type not implemented, fix radius.c!\n");
+				ULOG_ERR("Policy type not implemented, fix radius-client.c!\n");
 				goto fail;
 		}
 
@@ -342,21 +350,34 @@ main(int argc, char **argv)
 	uint64_t attribute;
 	int i;
 
-	if (argc != 2)
-		goto fail;
+	ulog_open(ULOG_STDIO | ULOG_SYSLOG, LOG_DAEMON, "uspot-radius");
+	rc_openlog("uspot-radius");
 
-	if (rh == NULL)
+	if (argc != 2) {
+		ULOG_ERR("Invalid number of arguments!\n");
 		goto fail;
+	}
+
+	if (rh == NULL) {
+		ULOG_ERR("Out of memory!\n");
+		goto fail;
+	}
 
 	rh = rc_config_init(rh);
-	if (rh == NULL)
+	if (rh == NULL) {
+		ULOG_ERR("Failed to initialize rc_config!\n");
 		goto fail;
+	}
 
-	if (rc_add_config(rh, "dictionary", RADCLI_DICT, "code", __LINE__))
+	if (rc_add_config(rh, "dictionary", RADCLI_DICT, "code", __LINE__)) {
+		ULOG_ERR("Failed to add dictionary!\n");
 		goto fail;
+	}
 
-	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0)
+	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
+		ULOG_ERR("Failed to read dictionary!\n");
 		goto fail;
+	}
 
 	// populate radius_policy from radcli dictionary names/types
 	for (i = 0; i < __RADIUS_MAX; i++) {
@@ -366,7 +387,7 @@ main(int argc, char **argv)
 		attribute = ((uint64_t)avpair[i].vendorspec << VENDOR_BIT_SIZE) | (uint64_t)avpair[i].attrid;
 		DA = rc_dict_getattr(rh, attribute);
 		if (!DA) {
-			fprintf(stderr, "failed to lookup attribute key %d\n", i);
+			ULOG_ERR("Failed to lookup attribute key %d\n", i);
 			goto fail;
 		}
 
@@ -383,18 +404,22 @@ main(int argc, char **argv)
 				radius_policy[i].type = BLOBMSG_TYPE_STRING;
 				break;
 			default:
-				fprintf(stderr, "unsupported attribute type %d for %s\n", DA->type, DA->name);
+				ULOG_ERR("Unsupported attribute type %d for %s\n", DA->type, DA->name);
 				goto fail;
 		}
 	}
 
 	if (blob_buf_init(&b, 0))
 		goto fail;
-	if (!blobmsg_add_json_from_file(&b, argv[1]))
+	if (!blobmsg_add_json_from_file(&b, argv[1])) {
+		ULOG_ERR("Failed to read JSON!\n");
 		goto fail;
+	}
 
-	if (blobmsg_parse(radius_policy, __RADIUS_MAX, tb, blob_data(b.head), blob_len(b.head)))
+	if (blobmsg_parse(radius_policy, __RADIUS_MAX, tb, blob_data(b.head), blob_len(b.head))) {
+		ULOG_ERR("Failed to parse JSON!\n");
 		goto fail;
+	}
 
 	return radius(rh);
 fail:

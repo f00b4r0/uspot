@@ -21,6 +21,7 @@
 #	option cpa_venue_url ''		# OPTIONAL - value is provided verbatim as 'venue-info-url'
 
 # for auth mode 'uam' and 'radius':
+#	option rad_serv_type 'udp'	# OPTIONAL - radius server type. Supported: udp, tcp
 #	option auth_server ''		# REQUIRED - radius authentication server name or address
 #	option auth_port '1812'		# OPTIONAL - radius authentication server port
 #	option auth_secret ''		# REQUIRED - radius authentication server password

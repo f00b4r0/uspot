@@ -30,6 +30,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 		settings: {
 			accounting,
 			device,
+			rad_serv_type: d.rad_serv_type,
 			auth_mode: d.auth_mode,
 			auth_server: d.auth_server,
 			auth_secret: d.auth_secret,
@@ -119,6 +120,9 @@ function json_cmd(cmd, input) {
 function radius_init(uspot, mac, payload, auth) {
 	let settings = uspots[uspot].settings;
 
+	if (settings.rad_serv_type)
+		payload.serv_type = settings.rad_serv_type;
+	
 	if (auth) {
 		payload.server = sprintf('%s:%s:%s', settings.auth_server, settings.auth_port, settings.auth_secret);
 		if (settings.auth_proxy)

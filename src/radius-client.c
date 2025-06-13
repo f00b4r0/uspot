@@ -31,6 +31,7 @@ enum {
 	RADIUS_acct,
 	RADIUS_authserver,
 	RADIUS_acctserver,
+	RADIUS_servtype,
 	RADIUS_ACCT_TYPE,
 	RADIUS_USERNAME,
 	RADIUS_PASSWORD,
@@ -67,6 +68,7 @@ static struct blobmsg_policy radius_policy[__RADIUS_MAX] = {
 	[RADIUS_acct] = { .name = "acct", .type = BLOBMSG_TYPE_BOOL },
 	[RADIUS_authserver] = { .name = "server", .type = BLOBMSG_TYPE_STRING },
 	[RADIUS_acctserver] = { .name = "acct_server", .type = BLOBMSG_TYPE_STRING },
+	[RADIUS_servtype] = { .name = "serv_type", .type = BLOBMSG_TYPE_STRING },
 	[RADIUS_PROXY_STATE_AUTH] = { .name = "auth_proxy", .type = BLOBMSG_TYPE_STRING },
 	[RADIUS_PROXY_STATE_ACCT] = { .name = "acct_proxy", .type = BLOBMSG_TYPE_STRING },
 };
@@ -229,6 +231,7 @@ static int nonattr_blobkey(int key)
 		case RADIUS_acct:
 		case RADIUS_authserver:
 		case RADIUS_acctserver:
+		case RADIUS_servtype:
 		// override proxy
 		case RADIUS_PROXY_STATE_ACCT:
 		case RADIUS_PROXY_STATE_AUTH:
@@ -257,6 +260,12 @@ radius(rc_handle *rh)
 	if (tb[RADIUS_acctserver]) {
 		if (rc_add_config(rh, "acctserver", blobmsg_get_string(tb[RADIUS_acctserver]), "code", __LINE__)) {
 			ULOG_ERR("Failed to set acctserver!\n");
+			goto fail;
+		}
+	}
+	if (tb[RADIUS_servtype]) {
+		if (rc_add_config(rh, "serv-type", blobmsg_get_string(tb[RADIUS_servtype]), "code", __LINE__)) {
+			ULOG_ERR("Failed to set serv-type!\n");
 			goto fail;
 		}
 	}

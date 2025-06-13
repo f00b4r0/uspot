@@ -25,16 +25,19 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	if (!d[".anonymous"]) {
 		let accounting = !!(d.acct_server && d.acct_secret);
 		let device = uci.get('network', d.interface, 'device');
+		let radsec = !!(d.rad_serv_type in ["tls", "dtls"]);
+
 		uspots[d[".name"]] = {
 		state: 1,	// active by default
 		settings: {
 			accounting,
 			device,
+			radsec,
 			rad_serv_type: d.rad_serv_type,
 			auth_mode: d.auth_mode,
 			auth_server: d.auth_server,
 			auth_secret: d.auth_secret,
-			auth_port: d.auth_port || 1812,
+			auth_port: d.auth_port || ((radsec) ? 2083 : 1812),
 			auth_proxy: d.auth_proxy,
 			acct_server: d.acct_server,
 			acct_secret: d.acct_secret,
@@ -122,17 +125,18 @@ function radius_init(uspot, mac, payload, auth) {
 
 	if (settings.rad_serv_type)
 		payload.serv_type = settings.rad_serv_type;
-	
-	if (auth) {
-		payload.server = sprintf('%s:%s:%s', settings.auth_server, settings.auth_port, settings.auth_secret);
-		if (settings.auth_proxy)
-			payload.auth_proxy = settings.auth_proxy;
-	}
-	else {
-		payload.acct = true;
+
+	payload.acct = !auth;
+
+	if (!(auth || settings.radsec)) {	// acct_server is not used in RadSec
 		payload.acct_server = sprintf('%s:%s:%s', settings.acct_server, settings.acct_port, settings.acct_secret);
 		if (settings.acct_proxy)
 			payload.acct_proxy = settings.acct_proxy;
+	}
+	else {
+		payload.server = sprintf('%s:%s:%s', settings.auth_server, settings.auth_port, settings.auth_secret);
+		if (settings.auth_proxy)
+			payload.auth_proxy = settings.auth_proxy;
 	}
 
 	payload['NAS-Identifier'] = settings.nas_id;	// XXX RFC says NAS-IP is not required when NAS-ID is set, but it's added by libradcli anyway

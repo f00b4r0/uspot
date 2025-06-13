@@ -21,12 +21,12 @@
 #	option cpa_venue_url ''		# OPTIONAL - value is provided verbatim as 'venue-info-url'
 
 # for auth mode 'uam' and 'radius':
-#	option rad_serv_type 'udp'	# OPTIONAL - radius server type. Supported: udp, tcp
+#	option rad_serv_type 'udp'	# OPTIONAL - radius server type. Supported: udp, tcp, tls, dtls
 #	option auth_server ''		# REQUIRED - radius authentication server name or address
-#	option auth_port '1812'		# OPTIONAL - radius authentication server port
-#	option auth_secret ''		# REQUIRED - radius authentication server password
+#	option auth_port '1812'		# OPTIONAL - radius authentication server port - defaults to 1812 unless rad_serv_type is tls/dtls: 2083
+#	option auth_secret ''		# REQUIRED - radius authentication server password. For tls/dtls with PSK auth, format is 'psk@username@hexkey'
 #	option auth_proxy ''		# OPTIONAL - radius authentication server proxy
-#	option acct_server ''		# REQUIRED if RADIUS accounting is active - radius accounting server name or address
+#	option acct_server ''		# REQUIRED if RADIUS accounting is active and rad_serv_type is not tls/dtls, ignored otherwise - radius accounting server name or address
 #	option acct_port '1813'		# OPTIONAL - radius accounting server port
 #	option acct_secret ''		# REQUIRED if acct_server is set - radius accounting server password
 #	option acct_proxy ''		# OPTIONAL - radius accounting server proxy

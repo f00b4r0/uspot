@@ -27,9 +27,9 @@
 #include <libubox/blobmsg_json.h>
 
 enum {
-	RADIUS_ACCT,
-	RADIUS_SERVER,
-	RADIUS_ACCT_SERVER,
+	RADIUS_acct,
+	RADIUS_authserver,
+	RADIUS_acctserver,
 	RADIUS_ACCT_TYPE,
 	RADIUS_USERNAME,
 	RADIUS_PASSWORD,
@@ -63,9 +63,9 @@ enum {
 };
 
 static struct blobmsg_policy radius_policy[__RADIUS_MAX] = {
-	[RADIUS_ACCT] = { .name = "acct", .type = BLOBMSG_TYPE_BOOL },
-	[RADIUS_SERVER] = { .name = "server", .type = BLOBMSG_TYPE_STRING },
-	[RADIUS_ACCT_SERVER] = { .name = "acct_server", .type = BLOBMSG_TYPE_STRING },
+	[RADIUS_acct] = { .name = "acct", .type = BLOBMSG_TYPE_BOOL },
+	[RADIUS_authserver] = { .name = "server", .type = BLOBMSG_TYPE_STRING },
+	[RADIUS_acctserver] = { .name = "acct_server", .type = BLOBMSG_TYPE_STRING },
 	[RADIUS_PROXY_STATE_AUTH] = { .name = "auth_proxy", .type = BLOBMSG_TYPE_STRING },
 	[RADIUS_PROXY_STATE_ACCT] = { .name = "acct_proxy", .type = BLOBMSG_TYPE_STRING },
 };
@@ -224,9 +224,10 @@ result(rc_handle const *rh, int accept, VALUE_PAIR *pair)
 static int nonattr_blobkey(int key)
 {
 	switch (key) {
-		case RADIUS_ACCT:
-		case RADIUS_SERVER:
-		case RADIUS_ACCT_SERVER:
+		case RADIUS_acct:
+		case RADIUS_authserver:
+		case RADIUS_acctserver:
+		// override proxy
 		case RADIUS_PROXY_STATE_ACCT:
 		case RADIUS_PROXY_STATE_AUTH:
 			return 1;	// ignore those keys
@@ -245,16 +246,16 @@ radius(rc_handle *rh)
 	void *pval;
 	int len, i;
 
-	if (tb[RADIUS_SERVER]) {
-		if (rc_add_config(rh, "authserver", blobmsg_get_string(tb[RADIUS_SERVER]), "code", __LINE__))
+	if (tb[RADIUS_authserver]) {
+		if (rc_add_config(rh, "authserver", blobmsg_get_string(tb[RADIUS_authserver]), "code", __LINE__))
 			goto fail;
 	}
-	if (tb[RADIUS_ACCT_SERVER]) {
-		if (rc_add_config(rh, "acctserver", blobmsg_get_string(tb[RADIUS_ACCT_SERVER]), "code", __LINE__))
+	if (tb[RADIUS_acctserver]) {
+		if (rc_add_config(rh, "acctserver", blobmsg_get_string(tb[RADIUS_acctserver]), "code", __LINE__))
 			goto fail;
 	}
 
-	if (tb[RADIUS_ACCT] && blobmsg_get_bool(tb[RADIUS_ACCT]))
+	if (tb[RADIUS_acct] && blobmsg_get_bool(tb[RADIUS_acct]))
 		rtimeout = "2";		// short timeout for accounting requests
 	else
 		rtimeout = "5";
@@ -313,7 +314,7 @@ radius(rc_handle *rh)
 		}
 	}
 
-	if (tb[RADIUS_ACCT] && blobmsg_get_bool(tb[RADIUS_ACCT])) {
+	if (tb[RADIUS_acct] && blobmsg_get_bool(tb[RADIUS_acct])) {
 		if (tb[RADIUS_PROXY_STATE_ACCT]) {
 			if (rc_avpair_add(rh, &send, PW_PROXY_STATE, blobmsg_get_string(tb[RADIUS_PROXY_STATE_ACCT]), -1, 0) == NULL)
 				goto fail;

@@ -16,7 +16,7 @@
 let bpf = require("bpf");
 import { pack, unpack } from 'struct';
 
-const prio = 0x200;
+const prio = 0x100;	// prio must be higher than that of ratelimit
 
 function client_key(mac)
 {

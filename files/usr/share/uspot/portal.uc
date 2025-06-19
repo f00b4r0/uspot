@@ -31,7 +31,7 @@ uci.foreach('uspot', 'uspot', (d) => {
 	let spotname = d[".name"];
 	let dev = uci.get('network', d.interface, 'device');
 	if (!dev) {
-		warn('uspot: interface not provided in section "' + spotname + '"\n');
+		warn('uspot: interface not provided (or missing device) in section "' + spotname + '"\n');
 		return;
 	}
 	adddev(dev, spotname);

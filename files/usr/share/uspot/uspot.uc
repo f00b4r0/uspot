@@ -21,10 +21,12 @@ let uspots = {};
 // setup logging
 ulog_open(ULOG_SYSLOG, LOG_DAEMON, "uspot");
 
+let config_valid = true;
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
+	let device = null;
 	if (!d[".anonymous"]) {
 		let accounting = !!(d.acct_server && d.acct_secret);
-		let device = uci.get('network', d.interface, 'device');
+		device = uci.get('network', d.interface, 'device');
 		let radsec = !!(d.rad_serv_type in ["tls", "dtls"]);
 
 		uspots[d[".name"]] = {
@@ -62,9 +64,41 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 		clients: {},
 		};
 	}
+
+	// basic validation - first mandatory settings
+	if (!(d.auth_mode && d.interface && d.setname)) {
+		config_valid = false;
+		ERR(d[".name"] + ": missing auth_mode, interface or setname!");
+		return;
+	}
+
+	if (!device) {
+		config_valid = false;
+		ERR(d[".name"] + ": missing network device for interface: " + d.interface);
+		return;
+	}
+
+	if (!(d.auth_mode in ["uam","radius","credentials","click-to-continue"])) {
+		config_valid = false;
+		ERR(d[".name"] + ": invalid auth_mode: " + d.auth_mode);
+		return;
+	}
+
+	// common requirements for radius and UAM
+	if (d.auth_mode in ["radius","uam"]) {
+		if (!(d.auth_server && d.auth_secret && d.nasid && d.nasmac)) {
+			config_valid = false;
+			ERR(d[".name"] + ": missing auth_server, auth_secret, nasid or nasmac!");
+		}
+
+		if (("uam" == d.auth_mode) && !d.uam_server) {
+			config_valid = false;
+			ERR(d[".name"] + ": missing uam_server!");
+		}
+	}
 });
 
-if (!uciload) {
+if (!uciload || !config_valid) {
 	let log = 'failed to load config';
 	ERR(log);
 	warn(log + '\n');

@@ -1,7 +1,7 @@
 #!/usr/bin/ucode
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2022-2023 John Crispin <john@phrozen.org>
-// SPDX-FileCopyrightText: 2023-2024 Thibaut Varène <hacks@slashdirt.org>
+// SPDX-FileCopyrightText: 2023-2025 Thibaut Varène <hacks@slashdirt.org>
 
 'use strict';
 
@@ -13,6 +13,7 @@ let ubus = require('ubus');
 let uconn = ubus.connect();
 let uci = require('uci').cursor();
 let lib = require('uspotlib');
+let uacct;
 import { ulog_open, ulog, ULOG_SYSLOG, LOG_DAEMON, LOG_DEBUG, ERR, WARN, INFO } from 'log';
 
 let uspots = {};
@@ -49,6 +50,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			session_timeout: d.session_timeout || 0,
 			disconnect_delay: d.disconnect_delay,
 			ratelimit_def: d.ratelimit_def,
+			counters: d.counters,
 			debug: d.debug,
 		},
 		clients: {},
@@ -188,13 +190,14 @@ function radius_acct(uspot, mac, payload) {
 
 	if (payload.acct_type != radat_start) {
 		payload['Acct-Session-Time'] = time() - client.connect;
-		if (length(state.acct_data)) {
-			payload['Acct-Output-Octets'] = state.acct_data.bytes_dl & 0xffffffff;
-			payload['Acct-Input-Octets'] = state.acct_data.bytes_ul & 0xffffffff;
-			payload['Acct-Output-Gigawords'] = state.acct_data.bytes_dl >> 32;
-			payload['Acct-Input-Gigawords'] = state.acct_data.bytes_ul >> 32;
-			payload['Acct-Output-Packets'] = state.acct_data.packets_dl;
-			payload['Acct-Input-Packets'] = state.acct_data.packets_ul;
+		let acct_data = +settings.counters ? uacct.client_get(settings.device, mac) : null;
+		if (length(acct_data)) {
+			payload['Acct-Output-Packets'] = acct_data.packets_out;
+			payload['Acct-Output-Octets'] = acct_data.bytes_out & 0xffffffff;
+			payload['Acct-Output-Gigawords'] = acct_data.bytes_out >> 32;
+			payload['Acct-Input-Packets'] = acct_data.packets_in;
+			payload['Acct-Input-Octets'] = acct_data.bytes_in & 0xffffffff;
+			payload['Acct-Input-Gigawords'] = acct_data.bytes_in >> 32;
 		}
 	}
 	if (state.data?.radius?.reply?.Class)
@@ -240,6 +243,8 @@ function radius_start(uspot, mac) {
 		'Acct-Status-Type': radat_start,
 	};
 	debug(uspot, mac + ' acct start');
+	if (+uspots[uspot].settings.counters)
+		uacct.client_add(uspots[uspot].settings.device, mac, true, true);
 	radius_acct(uspot, mac, payload);
 }
 
@@ -465,6 +470,10 @@ function client_remove(uspot, mac, reason) {
 	// delete ratelimit rules if any
 	uconn.call('ratelimit', 'client_delete', { device, address: mac });
 
+	// delete client from traffic accounting map, if any
+	if (uacct)
+		uacct.client_del(device, mac);
+
 	delete uspots[uspot].clients[mac];
 }
 
@@ -579,6 +588,25 @@ function start()
 	for (let uspot, data in uspots) {
 		let server = data.settings.acct_server;
 		let nasid = data.settings.nas_id;
+		let device = data.settings.device;
+
+		// ensure target device is available
+		let count = 10;
+		while (--count && !uconn.call('network.device','status', {name: device})) {
+			WARN(`${uspot}: cannot find device {$device}, retrying: ${count}`);
+			sleep(2000);
+		}
+
+		if (!count) {
+			ERR(`${uspot}: cannot find device {$device}, giving up!`);
+			delete uspots[uspot];
+			continue;
+		}
+
+		if (+data.settings.counters) {
+			uacct = uacct ? uacct : require('uspotbpf');
+			uacct.load(device);
+		}
 
 		if (!server || !nasid)
 			continue;
@@ -599,6 +627,9 @@ function stop()
 	for (let uspot, data in uspots) {
 		if (data.sessionid)	// we have previously sent Accounting-On
 			radius_acctoff(uspot);
+
+		if (+data.settings.counters)
+			uacct.unload(data.settings.device);
 
 		// clear ratelimit rules for our device
 		uconn.call('ratelimit', 'device_delete', { device: data.settings.device });
@@ -857,9 +888,11 @@ function run_service() {
 		client_get: {
 			call: function(req) {
 				function client_get_data(client, uspot, address) {
+					let acct_data = uacct ? uacct.client_get(uspots[uspot].settings.device, address) : null;
 					let data = {
 						... client.data || {},
 						duration: time() - client.connect,
+						... acct_data || {},
 					};
 
 					let timeout = +client.session;

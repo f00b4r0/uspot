@@ -483,6 +483,7 @@ function radius_accton(uspot)
 	let payload = {
 		'Acct-Status-Type': radat_accton,
 		'Acct-Session-Id': sessionid,
+		'Called-Station-Id': uspots[uspot].settings.nas_mac,
 	};
 	payload = radius_init(uspot, null, payload);
 	radius_call(payload);
@@ -499,6 +500,7 @@ function radius_acctoff(uspot)
 	let payload = {
 		'Acct-Status-Type': radat_acctoff,
 		'Acct-Session-Id': uspots[uspot].sessionid,
+		'Called-Station-Id': uspots[uspot].settings.nas_mac,
 	};
 	payload = radius_init(uspot, null, payload);
 	radius_call(payload);

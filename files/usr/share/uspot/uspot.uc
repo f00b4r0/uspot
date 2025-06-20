@@ -48,6 +48,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			idle_timeout: d.idle_timeout || 600,
 			session_timeout: d.session_timeout || 0,
 			disconnect_delay: d.disconnect_delay,
+			ratelimit_def: d.ratelimit_def,
 			debug: d.debug,
 		},
 		clients: {},
@@ -288,10 +289,11 @@ function client_interim(uspot, mac, time) {
 }
 
 /**
- * Apply RADIUS-provided client bandwidth limits.
+ * Apply static or RADIUS-provided client bandwidth limits.
  * This function parses a radius reply for the following attributes:
  * 'WISPr-Bandwidth-Max-{Up,Down}' or 'ChilliSpot-Bandwidth-Max-{Up,Down}'
  * and enforces these limits if present.
+ * If a global setting has been configured, the global default is applied.
  *
  * @param {string} uspot the target uspot
  * @param {string} mac the client MAC address
@@ -299,17 +301,18 @@ function client_interim(uspot, mac, time) {
 function client_ratelimit(uspot, mac) {
 	let client = uspots[uspot].clients[mac];
 	let device = uspots[uspot].settings.device;
+	let rldef = uspots[uspot].settings.ratelimit_def;
+	let maxup, maxdown;
 
-	if (!(client.radius?.reply))
-		return;
+	if (client.radius?.reply) {
+		let reply = client.radius.reply;
 
-	let reply = client.radius.reply;
+		// check known attributes - WISPr: bps, ChiliSpot: kbps
+		maxup = reply['WISPr-Bandwidth-Max-Up'] || (reply['ChilliSpot-Bandwidth-Max-Up']*1000);
+		maxdown = reply['WISPr-Bandwidth-Max-Down'] || (reply['ChilliSpot-Bandwidth-Max-Down']*1000);
+	}
 
-	// check known attributes - WISPr: bps, ChiliSpot: kbps
-	let maxup = reply['WISPr-Bandwidth-Max-Up'] || (reply['ChilliSpot-Bandwidth-Max-Up']*1000);
-	let maxdown = reply['WISPr-Bandwidth-Max-Down'] || (reply['ChilliSpot-Bandwidth-Max-Down']*1000);
-
-	if (!(+maxdown || +maxup))
+	if (!(+maxdown || +maxup || rldef))
 		return;
 
 	let rldata = {};
@@ -324,6 +327,10 @@ function client_ratelimit(uspot, mac) {
 	if (+maxup) {
 		args.rate_ingress = sprintf('%s', maxup);
 		rldata.maxup = maxup/1000;	// in kbps
+	}
+	if (rldef) {
+		args.defaults = rldef;
+		rldata.defaults = rldef;
 	}
 
 	uconn.error();	// XXX REVISIT clear error

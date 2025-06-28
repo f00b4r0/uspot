@@ -9,7 +9,7 @@ DAS_PROG=/usr/bin/uspot-das
 launch_das() {
 	local uspot="$1"
 
-	procd_open_instance "$uspot"
+	procd_open_instance "das_$uspot"
 	procd_set_param command "$DAS_PROG" -u "$uspot"
 	procd_set_param respawn
 	procd_close_instance

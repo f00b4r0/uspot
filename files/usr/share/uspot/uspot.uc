@@ -448,14 +448,6 @@ function client_create(uspot, mac, payload)
 
 	uspots[uspot].clients[mac] = client;
 
-	// if debug, save entire client payload to uspotfilter
-	if (+uspots[uspot].settings.debug)
-		uconn.call('uspotfilter', 'client_set', {
-			interface: uspot,
-			address: mac,
-			data: client,
-		});
-
 	debug(uspot, mac + ' creating client');
 }
 
@@ -507,7 +499,7 @@ function client_enable(uspot, mac) {
 		interface: uspot,
 		address: mac,
 		state: 1,
-		data: +uspots[uspot].settings.debug ? client : { connect: client.connect, },
+		data: { connect: client.connect, },
 	});
 
 	if (!uconn.error()) {
@@ -1001,6 +993,7 @@ function run_service() {
 						... client.data || {},
 						duration: time() - client.connect,
 						... acct_data || {},
+						... +uspots[uspot].settings.debug ? client : {},
 					};
 
 					let timeout = +client.session;

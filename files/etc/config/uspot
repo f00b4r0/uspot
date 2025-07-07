@@ -25,10 +25,16 @@
 #	option auth_server ''		# REQUIRED - radius authentication server name or address
 #	option auth_port '1812'		# OPTIONAL - radius authentication server port - defaults to 1812 unless rad_serv_type is tls/dtls: 2083
 #	option auth_secret ''		# REQUIRED - radius authentication server password. For tls/dtls with PSK auth, format is 'psk@username@hexkey'
+#	option auth_server2 ''		# OPTIONAL - radius secondary authentication server name or address
+#	option auth_port2 '1812'	# OPTIONAL - radius secondary authentication server port - defaults to 1812 unless rad_serv_type is tls/dtls: 2083
+#	option auth_secret2 ''		# REQUIRED if auth_server2 is set - radius secondary authentication server password. For tls/dtls with PSK auth, format is 'psk@username@hexkey'
 #	option auth_proxy ''		# OPTIONAL - radius authentication server proxy
 #	option acct_server ''		# REQUIRED if RADIUS accounting is active and rad_serv_type is not tls/dtls, ignored otherwise - radius accounting server name or address
 #	option acct_port '1813'		# OPTIONAL - radius accounting server port
 #	option acct_secret ''		# REQUIRED if acct_server is set - radius accounting server password
+#	option acct_server2 ''		# OPTIONAL if RADIUS accounting is active and rad_serv_type is not tls/dtls, ignored otherwise - radius secondary accounting server name or address
+#	option acct_port2 '1813'	# OPTIONAL - radius secondary accounting server port
+#	option acct_secret2 ''		# REQUIRED if acct_server2 is set - radius secondary accounting server password
 #	option acct_proxy ''		# OPTIONAL - radius accounting server proxy
 #	option acct_interval ''		# OPTIONAL - radius accounting interim interval override (seconds)
 #	option swapio ''		# OPTIONAL - swap the meaning of RADIUS 'Input' and 'Output' attributes

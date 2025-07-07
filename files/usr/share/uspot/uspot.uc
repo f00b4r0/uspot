@@ -40,10 +40,16 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			auth_server: d.auth_server,
 			auth_secret: d.auth_secret,
 			auth_port: d.auth_port || ((radsec) ? 2083 : 1812),
+			auth_server2: d.auth_server2,
+			auth_secret2: d.auth_secret2,
+			auth_port2: d.auth_port2 || ((radsec) ? 2083 : 1812),
 			auth_proxy: d.auth_proxy,
 			acct_server: d.acct_server,
 			acct_secret: d.acct_secret,
 			acct_port: d.acct_port || 1813,
+			acct_server2: d.acct_server,
+			acct_secret2: d.acct_secret,
+			acct_port2: d.acct_port || 1813,
 			acct_proxy: d.acct_proxy,
 			acct_interval: d.acct_interval,
 			swapio: d.swapio,
@@ -164,11 +170,15 @@ function radius_init(uspot, mac, payload, auth) {
 
 	if (!(auth || settings.radsec)) {	// acct_server is not used in RadSec
 		payload.acct_server = sprintf('%s:%s:%s', settings.acct_server, settings.acct_port, settings.acct_secret);
+		if (settings.acct_server2)
+			payload.acct_server += sprintf(',%s:%s:%s', settings.acct_server2, settings.acct_port2, settings.acct_secret2);
 		if (settings.acct_proxy)
 			payload.acct_proxy = settings.acct_proxy;
 	}
 	else {
 		payload.server = sprintf('%s:%s:%s', settings.auth_server, settings.auth_port, settings.auth_secret);
+		if (settings.auth_server2)
+			payload.server += sprintf(',%s:%s:%s', settings.auth_server2, settings.auth_port2, settings.auth_secret2);
 		if (settings.auth_proxy)
 			payload.auth_proxy = settings.auth_proxy;
 	}

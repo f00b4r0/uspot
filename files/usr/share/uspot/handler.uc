@@ -25,13 +25,12 @@ function request_start(ctx) {
 			let auth = portal.uspot_auth(ctx);
 			ctx.reply_msg = auth?.reply?.['Reply-Message'];
 			if (auth && auth['access-accept']) {
-				let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : ctx.config.final_redirect_url;
+				let redir = portal.uam_url(ctx, 'success');
 				portal.allow_client(ctx, redir);
 				return;
 			}
 		}
-		ctx.redir_location = portal.uam_url(ctx, 'notyet');
-		include('templates/redir.ut', ctx);
+		include('templates/redir.ut', { redir_location: portal.uam_url(ctx, 'notyet') });
 		return;
 	default:
 		include('templates/error.ut', ctx);

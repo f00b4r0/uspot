@@ -45,20 +45,17 @@ function auth_client(ctx) {
 		if (!ctx.seconds_remaining)
 			ctx.seconds_remaining = +(auth?.reply?.['Session-Timeout'] || ctx.config.session_timeout || 0);
 
-		let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'success') : ctx.config.final_redirect_url;
+		let redir = portal.uam_url(ctx, 'success');
 		portal.allow_client(ctx, redir);
 		return;
 	}
 
-	if (ctx.config.final_redirect_url == 'uam')
-		include('templates/redir.ut', { redir_location: portal.uam_url(ctx, 'reject') });
-	else
-		include('templates/error.ut', ctx);
+	include('templates/redir.ut', { redir_location: portal.uam_url(ctx, 'reject') });
 }
 
 // disconnect client
 function deauth_client(ctx) {
-	let redir = (ctx.config.final_redirect_url == 'uam') ? portal.uam_url(ctx, 'logoff') : null;
+	let redir = portal.uam_url(ctx, 'logoff');
 	portal.logoff_client(ctx, redir);
 }
 

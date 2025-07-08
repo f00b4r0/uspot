@@ -51,7 +51,6 @@
 #	option uam_secret ''		# OPTIONAL - remote UAM server password
 #	option uam_server ''		# REQUIRED - remote UAM server base url, e.g. "https://server.example.com/" - NB: trailing slash
 #	option challenge ''		# OPTIONAL - UAM shared challenge used either to encode the PAP Password if uam_secret is set; or as the challenge in CHAP auth, depending on UAM backend operation
-#	option final_redirect_url ''	# OPTIONAL - URL the client will be redirected to upon login. Special value 'uam' enables UAM 'success/reject/logoff' redirections URLs.
 #	option mac_auth '0'		# OPTIONAL - Attempt MAC-authentication first
 #	option mac_passwd ''		# OPTIONAL - Password sent for MAC-auth, defaults to formatted MAC address
 #	option mac_suffix ''		# OPTIONAL - suffix appended to username for MAC-auth

@@ -91,7 +91,10 @@ global.handle_request = function(env) {
 		return;
 
 	if (ctx.connected) {
-		include('templates/connected.ut', ctx);
+		if ('uam' == ctx.config.auth_mode)
+			include('templates/redir.ut', { redir_location: portal.uam_url(ctx, 'already') });
+		else
+			include('templates/connected.ut', ctx);
 		return;
 	}
 

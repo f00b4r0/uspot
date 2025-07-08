@@ -24,7 +24,7 @@ function request_start(ctx) {
 		if (+ctx.config.mac_auth) {
 			let auth = portal.uspot_auth(ctx);
 			ctx.reply_msg = auth?.reply?.['Reply-Message'];
-			if (auth && auth['access-accept']) {
+			if (+auth?.['access-accept']) {
 				let redir = portal.uam_url(ctx, 'success');
 				portal.allow_client(ctx, redir);
 				return;
@@ -74,7 +74,7 @@ function request_credentials(ctx) {
 	// check if the credentials are valid
 	let auth = portal.uspot_auth(ctx, ctx.form_data.username, ctx.form_data.password);
 	ctx.reply_msg = auth?.reply?.['Reply-Message'];
-	if (auth && auth['access-accept']) {
+	if (+auth?.['access-accept']) {
 		portal.allow_client(ctx);
 		return;
 	}

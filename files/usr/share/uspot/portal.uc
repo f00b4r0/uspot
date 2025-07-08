@@ -84,7 +84,7 @@ return {
 		});
 	},
 
-	// request authentication from uspot backend, return reply 'access-accept': 0 or 1
+	// request authentication from uspot backend, return reply
 	uspot_auth: function(ctx, username, password, challenge, extra) {
 		let payload = {
 			uspot: ctx.uspot,
@@ -104,7 +104,7 @@ return {
 	},
 
 
-	uam_url: function(ctx, res) {
+	uam_url: function(ctx, res, reason) {
 		let uam = require('uam');
 		let uam_url = ctx.config.uam_server +
 			'?res=' + res +
@@ -116,6 +116,8 @@ return {
 			'&called=' + ctx.config.nasmac +
 			'&nasid=' + ctx.config.nasid +
 			'&sessionid=' + ctx.sessionid;
+		if (reason)
+			uam_url += '&reason=' + reason;
 		if (ctx.seconds_remaining)
 			uam_url += '&timeleft=' + ctx.seconds_remaining;
 		if (ctx.config.uam_sslurl)

@@ -249,7 +249,7 @@ radius(rc_handle *rh)
 	char *rtimeout;
 	uint32_t val;
 	void *pval;
-	int len, i;
+	int len, i, ret;
 
 	if (tb[RADIUS_authserver]) {
 		if (rc_add_config(rh, "authserver", blobmsg_get_string(tb[RADIUS_authserver]), "code", __LINE__)) {
@@ -336,19 +336,30 @@ radius(rc_handle *rh)
 			if (rc_avpair_add(rh, &send, PW_PROXY_STATE, blobmsg_get_string(tb[RADIUS_PROXY_STATE_ACCT]), -1, 0) == NULL)
 				goto fail;
 		}
-		if (rc_acct(rh, 0, send) == OK_RC)
-			return result(rh, 1, NULL);
+
+		return rc_acct(rh, 0, send);	// we don't really care
 	} else {
 		if (tb[RADIUS_PROXY_STATE_AUTH]) {
 			if (rc_avpair_add(rh, &send, PW_PROXY_STATE, blobmsg_get_string(tb[RADIUS_PROXY_STATE_AUTH]), -1, 0) == NULL)
 				goto fail;
 		}
-		if (rc_auth(rh, 0, send, &received, NULL) == OK_RC)
-			return result(rh, 1, received);
+
+		ret = rc_auth(rh, 0, send, &received, NULL);
+		switch (ret) {
+		case OK_RC:
+		case REJECT_RC:
+		case CHALLENGE_RC:	// XXX TODO?
+			return result(rh, (OK_RC == ret), received);
+			break;
+		case TIMEOUT_RC:
+		default:
+			goto fail;
+			break;
+		}
 	}
 
 fail:
-	return result(rh, 0, NULL);
+	return -1;
 }
 
 int

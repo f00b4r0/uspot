@@ -38,7 +38,12 @@ function auth_client(ctx) {
 		payload['ChilliSpot-Lang'] = ctx.query_string.lang;
 
 	let auth = portal.uspot_auth(ctx, username, password, challenge, payload);
-	ctx.reply_msg = auth?.reply?.['Reply-Message'];
+	if (!length(auth)) {
+		include('templates/redir.ut', { redir_location: portal.uam_url(ctx, 'failed', 'other') });
+		return;
+	}
+
+	ctx.reply_msg = auth.reply?.['Reply-Message'];
 	if (+auth['access-accept']) {
 		// replicate computation done in uspot.uc:client_enable() to be able to send timeleft= to UAM frontend
 		// for new clients, ctx.seconds_remaining is unset here as it would only be populated after allow_client()

@@ -326,7 +326,7 @@ They are provided in [radcli/](files/etc/radcli/) for your convenience.
 
 When configured for UAM operation, the follwing UAM URL parameters are provided by uspot in the query string to the remote UAM server:
 
- - `res`: can be one of `already`, `success`, `reject`, `notyet` and `logoff`
+ - `res`: can be one of `already`, `success`, `reject`, `notyet`, `logoff` and `failed` (which also sets `reason=`)
  - `uamip`: the uspot local web server address
  - `uamport`: the uspot local UAM server port (as configured with `uam_port` configuration option)
  - `challenge`: MD5 challenge string (from `challenge` configuration option + formatted MAC address)

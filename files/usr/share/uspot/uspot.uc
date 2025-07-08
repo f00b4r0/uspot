@@ -864,10 +864,7 @@ function run_service() {
 					return { 'access-accept': match };
 				}
 
-				// else, radius/uam - give up early if no server set
-				if (!settings.auth_server)
-					return { 'access-accept': 0 };
-
+				// else, radius/uam
 				if (!username && !password) {
 					if  (!+settings.mac_auth)	// don't try mac-auth if not allowed
 						return { 'access-accept': 0 };
@@ -902,7 +899,7 @@ function run_service() {
 
 				let radius = radius_call(request);
 
-				if (radius['access-accept']) {
+				if (radius?.['access-accept']) {
 					delete request.server;	// don't publish RADIUS server secret
 					payload.radius = { reply: radius.reply, request };	// save RADIUS payload for later use
 					client_create(uspot, address, payload);
@@ -919,7 +916,7 @@ function run_service() {
 			 @param challenge: OPTIONAL: client CHAP challenge
 			 @param sessionid: OPTIONAL: accounting session ID
 			 @param reqdata: OPTIONAL: additional RADIUS request data - to be passed verbatim to radius-client
-			 @param return {object} "{"access-accept":N}" where N==1 if auth succeeded, 2 if already auth'd, 0 otherwise
+			 @param return {object} "{"access-accept":N}" where N==1 if auth succeeded, 2 if already auth'd, 0 otherwise. Nothing on RADIUS failure
 
 			 operation:
 			  - call with (uspot, address, client_ip) -> click-to-continue or RADIUS MAC authentication

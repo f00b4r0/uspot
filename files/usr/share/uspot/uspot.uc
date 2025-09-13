@@ -303,8 +303,11 @@ function radius_start(uspot, mac) {
 		'Acct-Status-Type': radat_start,
 	};
 	debug(uspot, mac + ' acct start');
-	if (+uspots[uspot].settings.counters)
-		uacct.client_add(uspots[uspot].settings.device, mac, true, true);
+	if (+uspots[uspot].settings.counters) {
+		let retval = uacct.client_add(uspots[uspot].settings.device, mac, true, true);
+		if (retval)		// returns null on success, error message on failure
+			ERR(`${uspot} failed to add client ${mac} to accounting map: ${retval}`);
+	}
 	radius_acct(uspot, mac, payload);
 }
 
@@ -713,7 +716,9 @@ function start()
 
 		if (+data.settings.counters) {
 			uacct = uacct ? uacct : require('uspotbpf');
-			uacct.load(device);
+			let retval = uacct.load(device);	// returns null on success, error message on failure
+			if (retval)
+				ERR(`${uspot}: failed to load BPF accouting module: ${retval}`);
 		}
 
 		// clear ratelimit rules for our device

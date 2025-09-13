@@ -62,7 +62,8 @@ return {
 	{
 		init(devname);
 		for (let type in ["egress", "ingress"])
-			ctx[devname].prog[type].tc_attach(devname, type, prio);
+			if (!ctx[devname].prog[type].tc_attach(devname, type, prio))
+				return bpf.error();
 	},
 
 	unload: function(devname)
@@ -76,7 +77,8 @@ return {
 	{
 		let flags = ((tx ? 1 : 0) << 0) | ((rx ? 1 : 0) << 1);
 		if (ctx[devname])
-			ctx[devname].map.set(client_key(mac), pack("BQQQQ", flags, 0, 0, 0, 0));
+			if (!ctx[devname].map.set(client_key(mac), pack("BQQQQ", flags, 0, 0, 0, 0)))
+				return bpf.error();
 	},
 
 	client_del: function(devname, mac)

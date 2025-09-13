@@ -25,9 +25,10 @@ let config_valid = true;
 let uciload = uci.foreach('uspot', 'uspot', (d) => {
 	let device = null;
 	if (!d[".anonymous"]) {
-		let accounting = !!(d.acct_server && d.acct_secret);
 		device = uci.get('network', d.interface, 'device');
 		let radsec = !!(d.rad_serv_type in ["tls", "dtls"]);
+		// enable accounting if radsec and acct_server is set to some (any) value; or if both acct_server and acct_secret are set
+		let accounting = !!(d.acct_server && (d.acct_secret || radsec));
 
 		uspots[d[".name"]] = {
 		state: 1,	// active by default

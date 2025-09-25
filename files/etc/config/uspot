@@ -45,6 +45,7 @@
 #	option nasmac ''		# REQUIRED - radius Called-Station, UAM '&called='
 #	option mac_format ''		# OPTIONAL - MAC format specifier: 'aabbccddeeff', 'aa-bb-cc-dd-ee-ff', 'aa:bb:cc:dd:ee:ff' or the equivalent uppercase, defaults to 'aa:bb:cc:dd:ee:ff'
 #	option location_name ''		# OPTIONAL - radius WISPr-Location-Name
+#	option nas_ip ''		# OPTIONAL - radius NAS-IP-Address - automatically set by libradcli by default
 
 # for auth_mode 'uam':
 #	option uam_port '3990'		# OPTIONAL - local UAM server port

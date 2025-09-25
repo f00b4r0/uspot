@@ -56,6 +56,7 @@ let uciload = uci.foreach('uspot', 'uspot', (d) => {
 			swapio: d.swapio,
 			nas_id: d.nasid,
 			nas_mac: d.nasmac,
+			nas_ip: d.nas_ip,
 			mac_auth: d.mac_auth,
 			mac_passwd: d.mac_passwd,
 			mac_suffix: d.mac_suffix,
@@ -185,6 +186,8 @@ function radius_init(uspot, mac, payload, auth) {
 	}
 
 	payload['NAS-Identifier'] = settings.nas_id;	// XXX RFC says NAS-IP is not required when NAS-ID is set, but it's added by libradcli anyway
+	if (settings.nas_ip)
+		payload['NAS-IP-Address'] = settings.nas_ip;	// allow overriding libradcli's idea of NAS-IP
 	if (settings.location_name)
 		payload['WISPr-Location-Name'] = settings.location_name;
 

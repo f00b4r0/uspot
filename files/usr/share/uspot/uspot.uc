@@ -263,8 +263,8 @@ function radius_acct(uspot, mac, payload) {
 			}
 		}
 	}
-	if (client.data?.radius?.reply?.Class)
-		payload.Class = client.data.radius.reply.Class;
+	if (client.radius?.reply?.Class)
+		payload.Class = client.radius.reply.Class;
 
 	radius_call(payload);
 }

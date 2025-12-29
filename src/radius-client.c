@@ -209,7 +209,7 @@ result(rc_handle const *rh, int accept, VALUE_PAIR *pair)
 
 		for (vp = pair; vp != NULL; vp = vp->next) {
 			if (rc_avpair_tostr(rh, vp, name, sizeof(name), value, sizeof(value)) == -1) {
-				ULOG_NOTE("Ignoring unknown attribute in reply: %llu\n", vp->attribute);
+				ULOG_NOTE("Ignoring unknown attribute in reply: %llu\n", (unsigned long long)vp->attribute);
 				continue;	// add as many attributes as possible
 			}
 			blobmsg_add_string(&b, name, value);

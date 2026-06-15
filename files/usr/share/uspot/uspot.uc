@@ -629,6 +629,7 @@ function accounting(uspot) {
 	let disconnect_delay = uspots[uspot].settings.disconnect_delay;
 	let device = uspots[uspot].settings.device;
 	let counters = +uspots[uspot].settings.counters;
+	let tawol = +disconnect_delay ? : +disconnect_delay + 600 : 600;
 
 	if (!list) {
 		WARN(`${uspot} no client list from uspotfilter!`);
@@ -643,7 +644,8 @@ function accounting(uspot) {
 			continue;
 		}
 
-		if (!list[mac] || !list[mac].state) {
+		// XXX clients not updated by uspotfilter in the past 10mn (+disconnect_delay where applicable) are assumed to be AWOL
+		if (!list[mac] || !list[mac].state || (+list[mac].last_update && (t - list[mac].last_update > tawol))) {
 			radius_terminate(uspot, mac, radtc_lostcarrier);
 			client_remove(uspot, mac, 'disconnect event');
 			continue;

@@ -1,6 +1,6 @@
 #!/usr/bin/ucode
 // SPDX-License-Identifier: GPL-2.0-only
-// SPDX-FileCopyrightText: 2023-2024 Thibaut Varène <hacks@slashdirt.org>
+// SPDX-FileCopyrightText: 2023-2026 Thibaut Varène <hacks@slashdirt.org>
 // uspotfilter - uspot interface to netfilter
 
 /*
@@ -138,6 +138,83 @@ function client_remove(uspot, mac)
 	delete uspots[uspot].clients[mac];
 }
 
+function update_neighs()
+{
+	let now = time();
+
+	for (let n in rtnl.request(rtnl.const.RTM_GETNEIGH, rtnl.const.NLM_F_DUMP, { })) {
+		let mac = n?.lladdr;
+		let dst = n?.dst;
+		let dev = n?.dev;
+
+		if (!dst || !dev)
+			continue;
+
+		switch (n?.family) {
+			case rtnl.const.AF_INET:
+			break;
+		default:
+			continue;
+		}
+
+		let uspot = devices[dev];
+		if (!uspot)	// not for us
+			continue;
+
+		let client = uspots[uspot].clients[mac];
+		let neigh = uspots[uspot].neighs[dst];
+
+		let state = n.state;
+
+		function lost_neigh()
+		{
+			if (neigh) {
+				client = uspots[uspot].clients[neigh];
+				if (!client)
+					return;
+
+				// if a disconnect delay is set, allow a grace period where client actual removal is handled by uspot
+				if (+uspots[uspot].settings.disconnect_delay && +client?.state) {
+					client.lost_since ??= now;
+					client.last_update = now;
+					delete client.idle_since;
+				}
+				else {
+					if (dst == client.ip4addr)
+						client_remove(uspot, neigh);
+				}
+			}
+		}
+
+		// process REACHABLE / STALE / FAILED neighbour states
+		switch (state) {
+			case rtnl.const.NUD_REACHABLE:
+				uspots[uspot].neighs[dst] = mac;
+				if (client) {
+					delete client.idle_since;
+					delete client.lost_since;
+					client.ip4addr = dst;
+					client.last_update = now;
+				}
+				else {
+					uspots[uspot].clients[mac] = { ip4addr: dst, last_update: now };
+				}
+				break;
+			case rtnl.const.NUD_STALE:
+				if (client) {
+					client.idle_since ??= now;
+					client.last_update = now;
+				}
+				break;
+			case rtnl.const.NUD_FAILED:
+				// lladdr is no longer available in these states
+				lost_neigh();
+				delete uspots[uspot].neighs[dst];
+				break;
+		}
+	}
+}
+
 // parse netlink NEIGH messages
 function rtnl_neigh_cb(msg)
 {
@@ -244,7 +321,8 @@ function flush_nftsets()
 function start()
 {
 	flush_nftsets();
-	rtnl.listener(rtnl_neigh_cb, null, [ rtnl.const.RTNLGRP_NEIGH ]);
+	// XXX REVISIT rtnl.listener just doesn't work reliably, see https://github.com/jow-/ucode/issues/380
+	//rtnl.listener(rtnl_neigh_cb, null, [ rtnl.const.RTNLGRP_NEIGH ]);
 }
 
 function stop()
@@ -365,6 +443,8 @@ function run_service() {
 				return ubus.STATUS_INVALID_ARGUMENT;
 			if (!(uspot in uspots))
 				return ubus.STATUS_INVALID_ARGUMENT;
+
+			update_neighs();
 
 			let clients = uspots[uspot].clients;
 

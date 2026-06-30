@@ -629,7 +629,7 @@ function accounting(uspot) {
 	let disconnect_delay = uspots[uspot].settings.disconnect_delay;
 	let device = uspots[uspot].settings.device;
 	let counters = +uspots[uspot].settings.counters;
-	let tawol = +disconnect_delay ? : +disconnect_delay + 600 : 600;
+	let tawol = +disconnect_delay ? +disconnect_delay + 600 : 600;
 
 	if (!list) {
 		WARN(`${uspot} no client list from uspotfilter!`);

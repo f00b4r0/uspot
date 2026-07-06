@@ -787,7 +787,12 @@ function das_coa_filter_changes(request)
 {
 	let changes = {};
 
-	for (let key in [ 'Session-Timeout', 'Idle-Timeout', 'Acct-Interim-Interval' ]) {
+	for (let key in [ 'Session-Timeout', 'Idle-Timeout', 'Acct-Interim-Interval',
+			  'WISPr-Bandwidth-Max-Up', 'WISPr-Bandwidth-Max-Down',
+			  'ChilliSpot-Bandwidth-Max-Up', 'ChilliSpot-Bandwidth-Max-Down',
+			  'ChilliSpot-Max-Input-Octets', 'ChilliSpot-Max-Input-Gigawords',
+			  'ChilliSpot-Max-Output-Octets', 'ChilliSpot-Max-Output-Gigawords',
+			  'ChilliSpot-Max-Total-Octets', 'ChilliSpot-Max-Total-Gigawords' ]) {
 		if (key in request) {
 			changes[key] = request[key];
 			delete request[key];
@@ -800,6 +805,8 @@ function das_coa_filter_changes(request)
 // update a client with CoA changes
 function das_coa_update_client(client, changes)
 {
+	let trig = {};
+
 	for (let key, val in changes) {
 		switch (key) {
 		case 'Acct-Interim-Interval':
@@ -811,8 +818,50 @@ function das_coa_update_client(client, changes)
 		case 'Idle-Timeout':
 			client.idle = val;
 			break;
+		case 'WISPr-Bandwidth-Max-Up':
+			client.radius.reply['WISPr-Bandwidth-Max-Up'] = val;
+			trig['rate'] = 1;
+			break;
+		case 'WISPr-Bandwidth-Max-Down':
+			client.radius.reply['WISPr-Bandwidth-Max-Down'] = val;
+			trig['rate'] = 1;
+			break;
+		case 'ChilliSpot-Bandwidth-Max-Up':
+			client.radius.reply['ChilliSpot-Bandwidth-Max-Up'] = val;
+			trig['rate'] = 1;
+			break;
+		case 'ChilliSpot-Bandwidth-Max-Down':
+			client.radius.reply['ChilliSpot-Bandwidth-Max-Down'] = val;
+			trig['rate'] = 1;
+			break;
+		case 'ChilliSpot-Max-Input-Octets':
+			client.radius.reply['ChilliSpot-Max-Input-Octets'] = val;
+			trig['quota'] = 1;
+			break;
+		case 'ChilliSpot-Max-Input-Gigawords':
+			client.radius.reply['ChilliSpot-Max-Input-Gigawords'] = val;
+			trig['quota'] = 1;
+			break;
+		case 'ChilliSpot-Max-Output-Octets':
+			client.radius.reply['ChilliSpot-Max-Output-Octets'] = val;
+			trig['quota'] = 1;
+			break;
+		case 'ChilliSpot-Max-Output-Gigawords':
+			client.radius.reply['ChilliSpot-Max-Output-Gigawords'] = val;
+			trig['quota'] = 1;
+			break;
+		case 'ChilliSpot-Max-Total-Octets':
+			client.radius.reply['ChilliSpot-Max-Total-Octets'] = val;
+			trig['quota'] = 1;
+			break;
+		case 'ChilliSpot-Max-Total-Gigawords':
+			client.radius.reply['ChilliSpot-Max-Total-Gigawords'] = val;
+			trig['quota'] = 1;
+			break;
 		}
 	}
+
+	return trig;
 }
 
 function run_service() {
@@ -1139,7 +1188,11 @@ function run_service() {
 
 				if (address) {
 					let client = uspots[uspot].clients[address];
-					das_coa_update_client(client, changes);
+					let trig = das_coa_update_client(client, changes);
+					if (trig?.rate)
+						client_ratelimit(uspot, address);
+					if (trig?.quota)
+						client_quotalimit(uspot, address);
 					INFO(`${uspot} ${address} CoA update`);
 				}
 

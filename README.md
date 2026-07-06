@@ -348,13 +348,7 @@ Optionally, depending on local configuration and/or RADIUS parameters, the follo
 ## Caveat
 
 uspot has been primarily tested with IPv4 captive clients.
-
-uspotfilter uses a RTNL listener to detect client state changes (disconnection in particular).
-There are limitations in the RTNL implementation that may cause, under specific circumstances,
-RTNL messages to be lost (see https://github.com/jow-/ucode/issues/184).
-This could result in lingering sessions if e.g. said sessions do not have a set timeout.  
-These limitations have been mitigated in ucode (see https://github.com/jow-/ucode/pull/185),
-which means that the probability for such occurrences is expected to be low.
+IPv6 operation is currently not supported.
 
 ## TODO
 

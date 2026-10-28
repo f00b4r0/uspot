@@ -72,6 +72,14 @@
 #include <libubus.h>
 #include <uci.h>
 
+// following defines appeared in 1.4.0
+#ifndef RADCLI_VENDOR_MASK
+ #define RADCLI_VENDOR_MASK 0xffffffff
+#endif
+#ifndef RADCLI_VENDOR_ATTR_SET
+ #define RADCLI_VENDOR_ATTR_SET(attr, vendor) ((attr)|((uint64_t)((vendor)&RADCLI_VENDOR_MASK)) << VENDOR_BIT_SIZE)
+#endif
+
 #define RADCLI_DICT		"/etc/radcli/dictionary"
 
 #define RAD_PROX_BUFLEN		(4 * 1024)
@@ -217,6 +225,75 @@ struct das_request {
 	void (* ubus_cb)(struct ubus_request *, int, struct blob_attr *);	///< ubus_invoke() reply callback
 };
 
+/*
+ tlv will be u8:id(=26)|u8:len(>=7)|u32:vendorid|u8:vid|u8:vlen|vattr[]|...
+ it is unknown whether multiple vendor-tlv can be encoded in a single vendor-specific attribute
+ but this implementation supports that since the RFC implies it should be supported
+ */
+static int
+parse_vendor_specific(struct blob_buf *b, const struct radius_tlv *tlv)
+{
+	const struct radius_tlv *vtlv;
+	uint8_t vattrs_len;
+	uint32_t vendorid;
+	int ret = -1;
+
+	if (tlv->len < 7)	// per RFC
+		goto fail;
+
+	vendorid = ntohl(*((uint32_t *)tlv->data));
+	vtlv = (const struct radius_tlv *)(vtlv->data + sizeof(vendorid));
+	vattrs_len = tlv->len - (sizeof(tlv->id) + sizeof(tlv->len) + sizeof(vendorid));
+
+	// parse VAVPs
+	while (vattrs_len >= sizeof(*vtlv)) {
+		DICT_ATTR *DA;
+		const char *attrname;
+		const void *val;
+		uint8_t id = vtlv->id;
+
+		// sanity check
+		if (vattrs_len < vtlv->len || vtlv->len < sizeof(*vtlv)) {
+			ULOG_ERR("invalid VTLV length\n");
+			goto fail;
+		}
+
+		// parse vendor attributes for uspot call
+
+		DA = rc_dict_getattr(das.rh, RADCLI_VENDOR_ATTR_SET(id, vendorid));
+		if (!DA) {
+			ULOG_ERR("failed to lookup attribute key %d (%d)\n", id, vendorid);
+			goto fail;
+		}
+
+		attrname = DA->name;
+		if (!attrname)
+			goto fail;
+
+		switch (DA->type) {
+			case PW_TYPE_STRING:
+				val = toval_str(vtlv);
+				if (!val || blobmsg_add_string(b, attrname, (const char *)val))
+					goto fail;
+				break;
+			case PW_TYPE_INTEGER:
+				val = toval_u32(vtlv);
+				if (!val || blobmsg_add_u32(b, attrname, *(const uint32_t *)val))
+					goto fail;
+				break;
+			default:
+				goto fail;
+		}
+
+		vattrs_len -= vtlv->len;
+		vtlv = (const struct radius_tlv *)((char *)vtlv + vtlv->len);
+	}
+
+	ret = 0;
+fail:
+	return ret;
+}
+
 // Process DAS request AVPs
 static int
 das_request_process(const struct das_request *drq)
@@ -264,8 +341,8 @@ das_request_process(const struct das_request *drq)
 			goto fail;
 		}
 
-		// copy passthrough AVPs to response - preserve order
 		switch (id) {
+			// copy passthrough AVPs to response - preserve order
 			case PW_CLASS:
 			case PW_STATE:
 			case PW_PROXY_STATE:
@@ -273,11 +350,16 @@ das_request_process(const struct das_request *drq)
 				tlvout = (struct radius_tlv *)((char *)tlvout + tlv->len);
 				outlen += tlv->len;
 				break;
+			// intercept vendor specific attributes
+			case PW_VENDOR_SPECIFIC:
+				if (parse_vendor_specific(&b, tlv))
+					goto fail;
+				break;
 			default:
 				break;
 		}
 
-		// parse known attributes for uspot call
+		// parse known attributes for uspot call - vendor-specific attrs will not trigger this block
 		if (radius_attrids[id].toval) {
 			const char *attrname = radius_attr_name(id);
 			const void *val = radius_attrids[id].toval(tlv);
@@ -373,7 +455,7 @@ uspot_das_cb(struct ubus_request *req, int type, struct blob_attr *msg)
  0+        0        0    18   Reply-Message (Note 2)		// NOT supported
  0         0        0    24   State
  0+        0        0    25   Class (Note 4)			// sent back unmodified
- 0+        0        0    26   Vendor-Specific (Note 7)		// NOT supported
+ 0+        0        0    26   Vendor-Specific (Note 7)		// session ident - supported
  0-1       0        0    30   Called-Station-Id (Note 1)	// session ident - supported
  0-1       0        0    31   Calling-Station-Id (Note 1)	// session ident - supported
  0-1       0        0    32   NAS-Identifier (Note 1)		// NAS ident - supported
@@ -404,6 +486,7 @@ disconnect_attrid_not_supported(uint8_t id)
 		case PW_NAS_IP_ADDRESS:
 		case PW_NAS_IDENTIFIER:
 		case PW_CLASS:
+		case PW_VENDOR_SPECIFIC:
 		case PW_CALLED_STATION_ID:
 		case PW_CALLING_STATION_ID:
 		case PW_PROXY_STATE:
@@ -415,7 +498,6 @@ disconnect_attrid_not_supported(uint8_t id)
 		// allowed but not implemented
 		case PW_NAS_PORT:
 		case PW_REPLY_MESSAGE:
-		case PW_VENDOR_SPECIFIC:
 		case PW_ACCT_MULTI_SESSION_ID:
 		case PW_EVENT_TIMESTAMP:
 		case PW_EAP_MESSAGE:
@@ -497,7 +579,7 @@ das_disconnect_request(const struct radius_header *inbuf, struct radius_header *
  0-1       0        0    23   Framed-IPX-Network (Note 3)
  0-1       0-1      0-1  24   State				// supported
  0+        0        0    25   Class (Note 3)			// supported
- 0+        0        0    26   Vendor-Specific (Note 7)
+ 0+        0        0    26   Vendor-Specific (Note 7)		// supported
  0-1       0        0    27   Session-Timeout (Note 3)		// supported
  0-1       0        0    28   Idle-Timeout (Note 3)		// supported
  0-1       0        0    29   Termination-Action (Note 3)
@@ -576,6 +658,7 @@ coa_attrid_not_supported(uint8_t id)
 		case PW_NAS_IDENTIFIER:
 		case PW_STATE:
 		case PW_CLASS:
+		case PW_VENDOR_SPECIFIC:	// change/ident (limited support inside uspot)
 		case PW_SESSION_TIMEOUT:	// change
 		case PW_IDLE_TIMEOUT:		// change
 		case PW_CALLED_STATION_ID:

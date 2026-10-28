@@ -393,7 +393,6 @@ function client_ratelimit(uspot, mac) {
 		rldata.defaults = rldef;
 	}
 
-	uconn.error();	// XXX REVISIT clear error
 	uconn.call('ratelimit', 'client_set', args);
 	if (!uconn.error())
 		client.data.ratelimit = rldata;
@@ -510,7 +509,6 @@ function client_enable(uspot, mac) {
 	if (cui)
 		client.radius.request['Chargeable-User-Identity'] = cui;
 
-	uconn.error();	// XXX REVISIT clear error
 	// tell uspotfilter this client is allowed
 	uconn.call('uspotfilter', 'client_set', {
 		interface: uspot,
@@ -555,7 +553,6 @@ function client_remove(uspot, mac, reason) {
 	};
 	let device = uspots[uspot].settings.device;
 
-	uconn.error();	// XXX REVISIT clear error
 	uconn.call('uspotfilter', 'client_remove', payload);
 	if (uconn.error())
 		return;	// if we couldn't remove from uspotfilter, try again at the next round - keep uspot/uspotfilter in sync

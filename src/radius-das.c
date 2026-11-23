@@ -198,13 +198,13 @@ static const struct {
 	[PW_USER_NAME] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_str, },
 	[PW_NAS_IP_ADDRESS] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_ip, },
 	[PW_FRAMED_IP_ADDRESS] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_ip, },
-	[PW_SESSION_TIMEOUT] = { .type = BLOBMSG_TYPE_INT32, .toval = toval_u32, },
-	[PW_IDLE_TIMEOUT] = { .type = BLOBMSG_TYPE_INT32, .toval = toval_u32, },
+	[PW_SESSION_TIMEOUT] = { .type = BLOBMSG_TYPE_INT64, .toval = toval_u32, },
+	[PW_IDLE_TIMEOUT] = { .type = BLOBMSG_TYPE_INT64, .toval = toval_u32, },
 	[PW_CALLED_STATION_ID] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_str, },
 	[PW_CALLING_STATION_ID] = {  .type = BLOBMSG_TYPE_STRING, .toval = toval_str,},
 	[PW_NAS_IDENTIFIER] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_str, },
 	[PW_ACCT_SESSION_ID] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_str, },
-	[PW_ACCT_INTERIM_INTERVAL] = { .type = BLOBMSG_TYPE_INT32, .toval = toval_u32, },
+	[PW_ACCT_INTERIM_INTERVAL] = { .type = BLOBMSG_TYPE_INT64, .toval = toval_u32, },
 	[PW_CHARGEABLE_USER_IDENTITY] = { .type = BLOBMSG_TYPE_STRING, .toval = toval_str, },
 };
 
@@ -289,8 +289,8 @@ das_request_process(const struct das_request *drq)
 					if (blobmsg_add_string(&b, attrname, (const char *)val))
 						goto fail;
 					break;
-				case BLOBMSG_TYPE_INT32:
-					if (blobmsg_add_u32(&b, attrname, *(const uint32_t *)val))
+				case BLOBMSG_TYPE_INT64:
+					if (blobmsg_add_u64(&b, attrname, *(const uint32_t *)val))
 						goto fail;
 					break;
 				default:

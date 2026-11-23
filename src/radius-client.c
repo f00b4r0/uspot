@@ -298,15 +298,25 @@ radius(rc_handle *rh)
 		pval = NULL;
 		len = 0;
 		switch (radius_policy[i].type) {
-			case BLOBMSG_TYPE_INT32:
+			case BLOBMSG_CAST_INT64:
+				// CAST_INT64 also accepts booleans, which are not RADIUS integers.
+				if (blobmsg_type(tb[i]) != BLOBMSG_TYPE_INT32 &&
+				    blobmsg_type(tb[i]) != BLOBMSG_TYPE_INT64)
+					continue;
 				len = 4;
 				if (avpair[i].cb) {
 					len = avpair[i].cb(&val, sizeof(val), tb[i]);
 					if (len < 0)
 						goto fail;
 				}
-				else
-					val = blobmsg_get_u32(tb[i]);
+				else {
+					int64_t value = blobmsg_cast_s64(tb[i]);
+					if (value < 0 || value > UINT32_MAX) {
+						ULOG_ERR("Integer value out of range for %s\n", radius_policy[i].name);
+						continue;
+					}
+					val = value;
+				}
 				pval = &val;
 				break;
 			case BLOBMSG_TYPE_STRING:
@@ -415,7 +425,8 @@ main(int argc, char **argv)
 		radius_policy[i].name = DA->name;
 		switch (DA->type) {
 			case PW_TYPE_INTEGER:
-				radius_policy[i].type = BLOBMSG_TYPE_INT32;
+				// JSON integers above INT32_MAX use INT64 even when they fit in RADIUS integers.
+				radius_policy[i].type = BLOBMSG_CAST_INT64;
 				break;
 			case PW_TYPE_STRING:
 			case PW_TYPE_IPADDR:

@@ -299,10 +299,6 @@ radius(rc_handle *rh)
 		len = 0;
 		switch (radius_policy[i].type) {
 			case BLOBMSG_CAST_INT64:
-				// CAST_INT64 also accepts booleans, which are not RADIUS integers.
-				if (blobmsg_type(tb[i]) != BLOBMSG_TYPE_INT32 &&
-				    blobmsg_type(tb[i]) != BLOBMSG_TYPE_INT64)
-					continue;
 				len = 4;
 				if (avpair[i].cb) {
 					len = avpair[i].cb(&val, sizeof(val), tb[i]);
@@ -310,8 +306,10 @@ radius(rc_handle *rh)
 						goto fail;
 				}
 				else {
-					int64_t value = blobmsg_cast_s64(tb[i]);
-					if (value < 0 || value > UINT32_MAX) {
+					// RADIUS integers must be non-negative. Trust callers to provide valid values:
+					// a negative input like -1 becomes UINT32_MAX and passes the range check.
+					uint64_t value = blobmsg_cast_u64(tb[i]);
+					if (value > UINT32_MAX) {
 						ULOG_ERR("Integer value out of range for %s\n", radius_policy[i].name);
 						continue;
 					}

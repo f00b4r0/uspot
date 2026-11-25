@@ -298,15 +298,21 @@ radius(rc_handle *rh)
 		pval = NULL;
 		len = 0;
 		switch (radius_policy[i].type) {
-			case BLOBMSG_TYPE_INT32:
+			case BLOBMSG_CAST_INT64:
 				len = 4;
 				if (avpair[i].cb) {
 					len = avpair[i].cb(&val, sizeof(val), tb[i]);
 					if (len < 0)
 						goto fail;
 				}
-				else
-					val = blobmsg_get_u32(tb[i]);
+				else {
+					uint64_t u64val = blobmsg_cast_u64(tb[i]);
+					if (u64val > UINT32_MAX) {
+						ULOG_ERR("Integer value out of range for %s\n", radius_policy[i].name);
+						goto fail;
+					}
+					val = (uint32_t)u64val;
+				}
 				pval = &val;
 				break;
 			case BLOBMSG_TYPE_STRING:
@@ -415,7 +421,8 @@ main(int argc, char **argv)
 		radius_policy[i].name = DA->name;
 		switch (DA->type) {
 			case PW_TYPE_INTEGER:
-				radius_policy[i].type = BLOBMSG_TYPE_INT32;
+				// PW_TYPE_INTEGER is unsigned 32 bit, which doesn't fit in BLOBMSG_TYPE_INT32
+				radius_policy[i].type = BLOBMSG_CAST_INT64;
 				break;
 			case PW_TYPE_STRING:
 			case PW_TYPE_IPADDR:
